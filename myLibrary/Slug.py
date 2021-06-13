@@ -1,6 +1,7 @@
 import re
 import unidecode
 
+
 class Slugify:
     def __init__(self):
         self.slug_text = ''

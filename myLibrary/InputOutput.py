@@ -3,21 +3,13 @@ class IntPut:
     # Веб сайт
     inp_website = 'Uslugio'
     # Город
-    inp_city = 'Уфа'
+    inp_city = 'Ufa'
     # Ключевые слова
     inp_key_words = ['ЛВС', 'wifi']
     # Показывать браузер
     inp_show_browser = True
     # Прокси сервера
-    inp_proxy = []
-    # Файл Excel uslugio
-    inp_name_excel_uslugio = ''
-    # Дирриктория файла Excel uslugio
-    inp_path_excel_uslugio = ''
-    # Продолжить запись в файла
-    inp_continuation_uslugio = True
-    # Перезапись файла
-    inp_rewriting_uslugio = False
+    inp_proxy = ['89.250.149.114:60981', '3.141.33.216:80', '52.53.180.26:80']
 
 
 # Возвращаемые данные
@@ -32,7 +24,3 @@ class OutPut:
     out_phone_number = []
     # Услуги
     out_service = []
-    # Ключевое слово
-    out_key_word = []
-    # Все данные
-    out_uslugio_all_data = []

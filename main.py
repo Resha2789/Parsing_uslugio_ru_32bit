@@ -1,8 +1,8 @@
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore, QtGui
 from myLibrary.MainWindow import MainWindow
+
 import traceback
 import sys
-
 
 def show_exception_and_exit(exc_type, exc_value, tb):
     traceback.print_exception(exc_type, exc_value, tb)
@@ -10,7 +10,7 @@ def show_exception_and_exit(exc_type, exc_value, tb):
     sys.exit(-1)
 
 
-def start():
+def main():
     import sys
     sys.excepthook = show_exception_and_exit
     app = QtWidgets.QApplication(sys.argv)  # Новый экземпляр QApplication
@@ -20,4 +20,4 @@ def start():
 
 
 if __name__ == '__main__':  # Если мы запускаем файл напрямую, а не импортируем
-    start()  # то запускаем функцию main()
+    main()  # то запускаем функцию main()
