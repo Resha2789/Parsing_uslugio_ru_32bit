@@ -1,4 +1,5 @@
 import json
+import re
 from myLibrary import InputOutput
 
 
@@ -12,6 +13,8 @@ class InitialData(InputOutput.IntPut, InputOutput.OutPut):
             'Размер_окна': [600, 300],
             'Расположение_окна': [0, 0],
         }
+        self.key_words_str = ''
+        self.proxy_str = ''
 
     # Считываем данных с setting.txt
     def load_md(self):
@@ -23,6 +26,26 @@ class InitialData(InputOutput.IntPut, InputOutput.OutPut):
             self.inp_show_browser = self.md['Показывать_браузер']
             self.inp_proxy = self.md['Прокси_сервера']
 
+            # Ключевые слова
+            self.key_words_str = ''
+            for i in self.inp_key_words:
+                self.key_words_str += i + ', '
+            if len(self.key_words_str) > 0:
+                self.key_words_str = re.sub(r'(,\s)$', '', self.key_words_str)
+
+            # Прокси сервера
+            self.proxy_str = ''
+            for i in self.inp_proxy:
+                self.proxy_str += i + '\n'
+
+            # Прокси сервера на вылет
+            self.uslugio_proxy = self.inp_proxy
+
+            # Прокси сервера на вылет
+            self.uslugio_index_item = 0
+
+            # Стату поиска прокси для uslugio
+            self.uslugio_found_proxy = False
 
         except FileNotFoundError:
             self.update_json()

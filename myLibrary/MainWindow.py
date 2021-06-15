@@ -3,8 +3,8 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QWidget, QTableWidgetItem, QAbstractItemView
 from PyQt5.QtCore import QObject
 from myLibrary.My_pyqt5 import Uslugio_avito_parsing
-from myLibrary.UslugioLibrary.UslugioLibrary import ReadData
-from myLibrary.UslugioLibrary.Uslugio import UslugioThreading
+from myLibrary.InitialData import InitialData
+from myLibrary.UslugioLibrary.UslugioParsing import UslugioThreading
 from myLibrary.UslugioLibrary.UslugioFindProxy import UslugioFindProxyThreading
 from myLibrary import Loger, Slug
 
@@ -19,11 +19,11 @@ class Communicate(QObject):
     uslugio_proxy_update = QtCore.pyqtSignal(object)
 
 
-class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Loger.OutLogger, Loger.OutputLogger, ReadData, Slug.Slugify):
+class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Loger.OutLogger, Loger.OutputLogger, InitialData, Slug.Slugify):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        self.read_data()
+        self.load_md()
         self.uslugio_threading = None
         self.uslugio_find_proxy_threading = None
         self.log = False
@@ -76,18 +76,25 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
     def start_uslugio_find_proxy(self):
         # Запускаем дополнительный поток Uslugio.com
         if self.uslugio_find_proxy_threading is None:
-            self.uslugio_find_proxy_threading = UslugioFindProxyThreading(parent=self,
+            self.uslugio_find_proxy_threading = UslugioFindProxyThreading(mainWindow=self,
                                                                           url='https://hidemy.name/ru/proxy-list/?type=s#list',
-                                                                          browser=True,
+                                                                          browser=False,
                                                                           js='myLibrary/JsLibrary/ProxyJsLibrary.js')
 
         self.log = True
         self.uslugio_find_proxy_threading.start()
 
     def start_uslugio_parsing(self):
+        if len(self.inp_proxy) == 0:
+            self.start_uslugio_find_proxy()
+            time.sleep(20)
+
         # Запускаем дополнительный поток Uslugio.com
         if self.uslugio_threading is None:
-            self.uslugio_threading = UslugioThreading(parent=self)
+            self.uslugio_threading = UslugioThreading(mainWindow=self,
+                                                      proxy=self.inp_proxy,
+                                                      browser=True,
+                                                      js='myLibrary/JsLibrary/UslugioJsLibrary.js')
 
         self.log = True
         self.uslugio_threading.start()
@@ -97,11 +104,11 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
             self.uslugio_threading.stop_parsing = True
 
     def append_log(self, text, severity):
-        if severity == self.Severity.ERROR:
-            self.plainTextEdit_uslugio_console.appendPlainText(text)
-            self.update_json()
-        else:
-            if self.log and len(text) > 3:
+        if len(text) > 3:
+            if severity == self.Severity.ERROR:
+                self.plainTextEdit_uslugio_console.appendPlainText(text)
+                self.update_json()
+            else:
                 self.plainTextEdit_uslugio_console.appendPlainText(text)
 
     def closeEvent(self, event):
@@ -121,9 +128,11 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
     def set_proxy(self):
         data = re.split(r'[,]+\s*|\n', self.textEdit_uslugio_proxy.toPlainText())
         self.inp_proxy = []
+        self.uslugio_proxy = []
         for i in data:
             if len(i) > 1:
                 self.inp_proxy.append(i)
+                self.uslugio_proxy.append(i)
         print(self.inp_proxy)
 
     def set_show_browser(self):
@@ -131,7 +140,8 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
             self.inp_show_browser = True
         else:
             self.inp_show_browser = False
-        print(self.inp_show_browser)
+        # print(self.inp_key_words)
+        # print(self.inp_proxy)
 
     def uslugio_progressBar(self, data):
         percent = (100 / (data['items'] / (data['i'] + 1)))

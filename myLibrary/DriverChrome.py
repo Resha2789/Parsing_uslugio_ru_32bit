@@ -1,19 +1,44 @@
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from myLibrary import ProxyCheck
+from myLibrary import MainWindow
 import time
+import socket
+import threading
 
 
 # Запуск WebDriverChrome
+# url='', proxy=None, browser=False
 class StartDriver(ProxyCheck.ProxyCheck):
-    def __init__(self, proxy=None, browser=False, url=''):
+    def __init__(self, mainWindow=None, url='', proxy=None, browser=False):
         super().__init__()
-        self.driver = None
-        self.proxy = proxy
-        self.show_browser = browser
-        self.url = url
+        self.mainWindow = mainWindow
+        m: MainWindow.MainWindow
+        m = self.mainWindow
 
-    def star_driver(self):
+        self.driver = None
+        self.show_browser = browser
+        self.loadStatus = False
+        self.driver_closed = False
+        self.set_url = url
+
+    def star_driver(self, url=None):
+        m: MainWindow.MainWindow
+        m = self.mainWindow
+
+        self.set_url = url
+
+        if self.driver is not None:
+            try:
+                print(f"DRIVER CLOSE")
+                self.driver.close()
+                time.sleep(4)
+                self.driver = None
+            except Exception as detail:
+                self.driver = None
+                print("ERROR DRIVER CLOSE:", detail)
+
+        print(f"DRIVER START")
         # Устанавливаем опции для webdriverChrome
         options = webdriver.ChromeOptions()
         # Развернуть на весь экран
@@ -21,34 +46,67 @@ class StartDriver(ProxyCheck.ProxyCheck):
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option('useAutomationExtension', False)
         # Утсанавливаем запрет на загрузку изоброжении
-        # options.add_argument('--blink-settings=imagesEnabled=false')
-        if self.proxy is not None:
-            for i in self.proxy:
-                if self.proxy_check('https://uslugio.com/', i):
-                    options.add_argument('--proxy-server=%s' % i)
-                    break
-
+        options.add_argument('--blink-settings=imagesEnabled=false')
         # Показать браузер
         if not self.show_browser:
             # Не показываем веб браузер
             options.add_argument('headless')
 
-        # Запускаем webDriverChrome
+        if m.uslugio_proxy is not None:
+            for i in m.uslugio_proxy:
+                if self.proxy_check('https://uslugio.com/', i):
+                    options.add_argument('--proxy-server=%s' % i)
+                    m.uslugio_proxy = m.uslugio_proxy[1:]
+                    break
+                m.uslugio_proxy = m.uslugio_proxy[1:]
+                if len(m.uslugio_proxy) == 0:
+                    m.uslugio_found_proxy = False
+                    m.start_uslugio_find_proxy()
+                    while not m.uslugio_found_proxy:
+                        print(f"Ждем прокси...")
+                        time.sleep(1)
+                    return self.star_driver(url=url)
 
+        # Запускаем webDriverChrome
+        socket.setdefaulttimeout(120)
         self.driver = webdriver.Chrome(executable_path=ChromeDriverManager().install(), chrome_options=options)
         self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         self.driver.execute_cdp_cmd('Network.setUserAgentOverride', {
             "userAgent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36'})
 
-        # Загружаем сайт по ссылке link
-        self.driver.get(self.url)
+        # Загружаем сайт по ссылке url
+        try:
+            threading.Thread(target=self.tim_out_thread).start()
+            self.driver.get(url)
+
+            if self.driver_closed:
+                self.driver_closed = False
+                print("Перезапускаем star_driver")
+                return self.star_driver(url=url)
+
+            self.loadStatus = True
+            print("Заргузка страницы успешна прошла.")
+
+        except Exception as detail:
+            print("ERROR star_driver:", detail)
+            print("Перезапускаем star_driver")
+            return self.star_driver(url=url)
 
         return True
 
+    # Thread
+    def tim_out_thread(self):
+        self.loadStatus = False
+        print("started tim_out_thread")
+        time.sleep(40)
+        if not self.loadStatus:
+            print("timeout первышен 40сек")
+            self.driver_closed = True
+            return
 
 class Execute(StartDriver):
-    def __init__(self, url='', proxy=None, browser=False, js=''):
-        super().__init__(url=url, proxy=proxy, browser=browser)
+    def __init__(self, mainWindow=None, url='', proxy=None, browser=False, js=''):
+        super().__init__(mainWindow=mainWindow, url=url, proxy=proxy, browser=browser)
         self.count_recurs = 0
         self.js = js
 
@@ -68,6 +126,12 @@ class Execute(StartDriver):
                             var scr = document.createElement('script');
                             scr.textContent = data;
                             document.body.appendChild(scr);
+                            
+                            scr = document.createElement('script');
+                            scr.type = 'text/javascript';
+                            scr.src = 'https://code.jquery.com/jquery-3.6.0.min.js';
+                            document.head.appendChild(scr);
+                            
                             return true;
                         }
                             return false;
@@ -87,6 +151,10 @@ class Execute(StartDriver):
             print(f'Файл скрипты не найден {self.js}')
             return False
 
+        except Exception as detail:
+            print("ERROR set_library:", detail)
+            return self.star_driver(url=self.set_url)
+
     # js_execute запускает внедренные скрипты на странице и получает от них ответ
     def execute_js(self, tr=0, sl=0, rt=False, t=0, data=None):
         """
@@ -100,8 +168,13 @@ class Execute(StartDriver):
         if sl > 0:
             time.sleep(sl)  # Засыпаем
 
-        # Запускаем javaScript в браузере и получаем результат
-        result = self.driver.execute_script(f"return {data}")
+        try:
+            # Запускаем javaScript в браузере и получаем результат
+            result = self.driver.execute_script(f"return {data}")
+        except Exception as detail:
+            print(f"EXCEPT execute_js")
+            print("ERROR:", detail)
+            return self.star_driver(url=self.set_url)  # Рекурсия с темеже параметрами
 
         # Если результа False и count_recurs < tr засыпаем на 2 сек. и запускаем рекурсию (рекурсия на случие если элемент не успел появится)
         if not result and self.count_recurs < tr:

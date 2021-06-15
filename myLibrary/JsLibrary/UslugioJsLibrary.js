@@ -93,3 +93,36 @@ function name(){
     }
     return data;
 }
+
+function name_and_uslugi(){
+    var el = $('.items_n');
+    if (el.length == 0) {
+        return false;
+    }
+
+    var title = el.find(".title.showone");
+    var name = [];
+    var servis = [];
+    var data = []
+    for (var i = 0; i < title.length; i++) {
+
+        data = title.eq(i).text();
+        data = data.replace(/\s+/ig, " ")
+        data = data.replace(/^\s+|\s+$/ig, "")
+        data = data.split(": ")
+        if (data.length == 2 && data[0].length > 1){
+            name.push(data[0]);
+            servis.push(data[1]);
+        }
+        else if(data.length == 2){
+            name.push("None");
+            servis.push(data[1]);
+        }
+        else{
+            name.push("None");
+            servis.push(data[0]);
+        }
+
+    }
+    return [name, servis];
+}
