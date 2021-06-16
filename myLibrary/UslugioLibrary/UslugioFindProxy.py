@@ -23,7 +23,7 @@ class UslugioFindProxyThreading(QThread, DriverChrome.Execute):
             return
 
         # Устанавливаем на вебсайт скрипты
-        if not self.set_library(url=self.url_proxy):
+        if not self.set_library():
             return
 
         # Прокси сервера

@@ -47,6 +47,9 @@ class InitialData(InputOutput.IntPut, InputOutput.OutPut):
             # Стату поиска прокси для uslugio
             self.uslugio_found_proxy = False
 
+            # Проверенные прокси для uslugio
+            self.uslugio_verified_proxies = []
+
         except FileNotFoundError:
             self.update_json()
             print(f"Данных нет, созданы данные по умолчанию: {self.md}")
