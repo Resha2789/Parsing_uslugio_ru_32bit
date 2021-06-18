@@ -15,8 +15,6 @@ class ParsingUslugio(DriverChrome.Execute):
         self.uslugioThreading = uslugioThreading
         self.stop_parsing = False
         self.pause_parsing = False
-        self.item = 0
-        self.total = 5
 
     def start_parsing_uslugio(self):
         m: MainWindow.MainWindow
@@ -27,6 +25,8 @@ class ParsingUslugio(DriverChrome.Execute):
 
         try:
             while not self.stop_parsing:
+                if not m.parsing_uslugio:
+                    return
 
                 show_more = 10
                 while show_more > 0:
@@ -37,68 +37,68 @@ class ParsingUslugio(DriverChrome.Execute):
                         return self.up_date()  # Перезагружаем страницу
                     time.sleep(1)
 
-                # Количество клиентов
-                items = self.execute_js(rt=True, t=1, exit_loop=True, data='count_items()')
+                # Имена и услуги
+                name_and_service = self.execute_js(rt=True, t=2, exit_loop=True, data='name_and_service()')
                 # Проверяем выполнился ли скрипт
-                if items == 'not execute':
+                if name_and_service == 'not execute':
                     return self.up_date()  # Перезагружаем страницу
+                total = len(name_and_service[1])
 
-                if m.uslugio_index_item == 0:
-                    print(f"Найдено: {items}")
-                else:
-                    print(f"Осталось: {items - (m.uslugio_index_item + 1)}")
+                if m.uslugio_index == 0:
+                    print(f"Найдено: {total}")
 
-                for i in range(m.uslugio_index_item, items):
+                for i in range(0, total):
+                    if not m.parsing_uslugio:
+                        return
 
-                    # Показываем клиента
-                    open_item = self.execute_js(sl=2, rt=True, t=2, exit_loop=True, data=f"open_item({i})")
-                    # Проверяем выполнился ли скрипт
-                    if open_item == 'not execute':
-                        return self.up_date()  # Перезагружаем страницу
-                    if open_item:
-                        # Номер телефона
-                        phone = self.execute_js(tr=10, sl=1, rt=True, t=2, exit_loop=True, data=f"get_phone()")
-                        # Проверяем выполнился ли скрипт или если вернул False
-                        if 'not execute' == phone or not phone or 'error' == phone:
-                            m.uslugio_index_item = i
-                            return self.up_date()
-                        m.out_phone_number.append(phone)
-
-                        # Имя
-                        name = self.execute_js(tr=2, sl=0, rt=True, t=2, exit_loop=True, data=f"name()")
+                    if name_and_service[1][i] not in m.out_service:
+                        # Показываем клиента
+                        open_item = self.execute_js(sl=2, rt=True, t=2, exit_loop=True, data=f"open_item({i})")
                         # Проверяем выполнился ли скрипт
-                        if name == 'not execute':
+                        if open_item == 'not execute':
                             return self.up_date()  # Перезагружаем страницу
-                        m.out_full_name.append(name)
+                        if open_item:
+                            # Номер телефона
+                            phone = self.execute_js(tr=10, sl=1, rt=True, t=2, exit_loop=True, data=f"get_phone()")
+                            # Проверяем выполнился ли скрипт или если вернул False
+                            if 'not execute' == phone or not phone or 'error' == phone:
+                                time.sleep(260)
+                                return self.up_date()
+                            m.out_phone_number.append(phone)
 
-                        # Город
-                        m.out_city.append(m.inp_city)
+                            # Имя
+                            m.out_full_name.append(name_and_service[0][i])
 
-                        # Услуги
-                        m.out_service.append(u.key_word)
+                            # Услуги
+                            m.out_service.append(name_and_service[1][i])
 
-                        print(f"{i + 1}. Имя: {name}, город: {m.inp_city}, тел. {phone}, услуги: {m.out_service[-1]}")
+                            # Город
+                            m.out_city.append(m.inp_city)
 
-                        # Стоп парсинг
-                        if self.stop_parsing:
-                            print(f"Парсинг остановлен {m.inp_website}")
-                            print(f"Спарсено {len(m.out_phone_number)}")
-                            break
+                            # key_word
+                            m.out_key_word.append(u.key_word)
 
-                        # Парсинг на паузу
-                        show_data = True
-                        while self.pause_parsing:
-                            if show_data:
-                                print(f"Парсинг на паузе {m.inp_website}")
+                            print(f"{len(m.out_service)}. Имя: {m.out_full_name[-1]}, Услуги: {m.out_service[-1]}, тел. {phone}, key_word: {m.out_key_word[-1]}")
+
+                            # Стоп парсинг
+                            if self.stop_parsing:
+                                print(f"Парсинг остановлен {m.inp_website}")
                                 print(f"Спарсено {len(m.out_phone_number)}")
-                                show_data = False
-                            time.sleep(1)
+                                break
 
-                    # Посылаем сигнал на главное окно в прогресс бар uslugio
-                    m.Commun.uslugio_progressBar.emit({'i': i, 'items': items})
+                            # Парсинг на паузу
+                            show_data = True
+                            while self.pause_parsing:
+                                if show_data:
+                                    print(f"Парсинг на паузе {m.inp_website}")
+                                    print(f"Спарсено {len(m.out_phone_number)}")
+                                    show_data = False
+                                time.sleep(1)
+
+                        # Посылаем сигнал на главное окно в прогресс бар uslugio
+                        m.Commun.uslugio_progressBar.emit({'i': i, 'items': total})
 
                 # Если все спарсино по ключевому слову то закрываем драйвер
-                m.uslugio_index_item = 0
                 print(f"Все спарсино по ключевому слову {u.key_word}")
                 return
 
@@ -115,13 +115,8 @@ class ParsingUslugio(DriverChrome.Execute):
             u: UslugioParsing.UslugioThreading
             u = self.uslugioThreading
 
-            print(f"Количество прокси {len(m.uslugio_proxy)}")
-            if len(m.uslugio_proxy) == 0:
-                m.uslugio_found_proxy = False
-                m.start_uslugio_find_proxy()
-                while not m.uslugio_found_proxy:
-                    print(f"Ждем прокси...")
-                    time.sleep(1)
+            if not m.parsing_uslugio:
+                return
 
             print(f"Перезагрузка с новым прокси {u.url}")
 

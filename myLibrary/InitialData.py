@@ -37,18 +37,24 @@ class InitialData(InputOutput.IntPut, InputOutput.OutPut):
             self.proxy_str = ''
             for i in self.inp_proxy:
                 self.proxy_str += i + '\n'
+            
+            # Статус парсинга uslugio
+            self.parsing_uslugio = False
+            
+            # Найденные прокси сервера
+            self.uslugio_proxy_finded = []
+            
+            # Проверенные прокси для uslugio
+            self.uslugio_verified_proxies = self.inp_proxy
+
+            # Использованные прокси uslugio
+            self.uslugio_used_proxies = []
 
             # Прокси сервера на вылет
-            self.uslugio_proxy = self.inp_proxy
-
-            # Прокси сервера на вылет
-            self.uslugio_index_item = 0
+            self.uslugio_index = 0
 
             # Стату поиска прокси для uslugio
             self.uslugio_found_proxy = False
-
-            # Проверенные прокси для uslugio
-            self.uslugio_verified_proxies = []
 
         except FileNotFoundError:
             self.update_json()

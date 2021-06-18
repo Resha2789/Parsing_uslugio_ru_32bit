@@ -24,3 +24,5 @@ class OutPut:
     out_phone_number = []
     # Услуги
     out_service = []
+    # Ключевое слово
+    out_key_word = []
