@@ -40,14 +40,17 @@ class UslugioFindProxyThreading(QThread, DriverChrome.Execute):
             for i in m.uslugio_proxy_finded:
                 if not m.parsing_uslugio:
                     break
-                if self.proxy_check('https://uslugio.com/', i):
-                    if not i in m.uslugio_verified_proxies and not i in m.uslugio_used_proxies:
-                        m.uslugio_verified_proxies.append(i)
-                        # Посылаем сигнал на главное окно в прокси
-                        m.Commun.uslugio_proxy_update.emit(m.uslugio_verified_proxies)
+                if len(m.uslugio_verified_proxies) < 5:
+                    if self.proxy_check('https://uslugio.com/', i):
+                        if not i in m.uslugio_verified_proxies and not i in m.uslugio_used_proxies:
+                            m.uslugio_verified_proxies.append(i)
+                            # Посылаем сигнал на главное окно в прокси
+                            m.Commun.uslugio_proxy_update.emit(m.uslugio_verified_proxies)
+                else:
+                    time.sleep(5)
 
-                # Запускаем поиск proxy занаво
-                if m.uslugio_proxy_finded[-1] == i:
+                if m.uslugio_proxy_finded.index(i) > 10 or m.uslugio_proxy_finded[-1] == i:
+                    # Запускаем поиск proxy занаво
                     return self.find_and_check_proxy()
 
             if m.parsing_uslugio:
@@ -62,5 +65,3 @@ class UslugioFindProxyThreading(QThread, DriverChrome.Execute):
                 return self.find_and_check_proxy()
             else:
                 return
-
-

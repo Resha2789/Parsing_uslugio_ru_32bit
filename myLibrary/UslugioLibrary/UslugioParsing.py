@@ -1,10 +1,10 @@
 from myLibrary.UslugioLibrary.UslugioParsingLib import ParsingUslugio
 from PyQt5.QtCore import QThread
-from myLibrary import DriverChrome, MainWindow
+from myLibrary import DriverChrome, MainWindow, Slug
 import threading
 
 
-class UslugioThreading(QThread, ParsingUslugio):
+class UslugioThreading(QThread, ParsingUslugio, Slug.Slugify):
     def __init__(self, mainWindow=None, *args, **kwargs):
         self.url = ''
         self.mainWindow = mainWindow
@@ -23,10 +23,10 @@ class UslugioThreading(QThread, ParsingUslugio):
                 break
 
             self.key_word = i
-            self.url = f"https://uslugio.com/{m.inp_city}?search={i}"
+            self.url = f"https://uslugio.com/{self.slugify(m.inp_city)}?search={i}"
 
             # Запус WebDriverChrome
-            if not self.star_driver(url=self.url):
+            if not self.star_driver(url=self.url, proxy=False):
                 return
 
             # Устанавливаем на вебсайт скрипты

@@ -32,9 +32,8 @@ class ProxyCheck():
         # socket.setdefaulttimeout(120)
         print(f"Проверка прокси, ожидаем {proxy}")
         if self.is_bad_proxy(proxy):
-            print(f"Прокси не работает")
             return False
         else:
-            print(f"Прокси рабочий")
+            print(f"Прокси сервер найден")
             time.sleep(3)
             return True

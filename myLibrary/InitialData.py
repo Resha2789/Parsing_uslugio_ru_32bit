@@ -19,12 +19,16 @@ class InitialData(InputOutput.IntPut, InputOutput.OutPut):
     # Считываем данных с setting.txt
     def load_md(self):
         try:
-            self.md = json.load(open('myLibrary/setting.txt'))
+            self.md = json.load(open('setting.txt'))
             print(f"Данные setting загружены {self.md}")
             self.inp_city = self.md['Город']
             self.inp_key_words = self.md['Ключевые_слова']
             self.inp_show_browser = self.md['Показывать_браузер']
             self.inp_proxy = self.md['Прокси_сервера']
+            self.inp_path_excel_uslugio = self.md['Path_excel_uslugio']
+            self.inp_name_excel_uslugio = self.md['Name_excel_uslugio']
+            self.inp_continuation_uslugio = self.md['Продолжить_файл_uslugio']
+            self.inp_rewriting_uslugio = self.md['Перезапись_файла_uslugio']
 
             # Ключевые слова
             self.key_words_str = ''
@@ -45,7 +49,7 @@ class InitialData(InputOutput.IntPut, InputOutput.OutPut):
             self.uslugio_proxy_finded = []
             
             # Проверенные прокси для uslugio
-            self.uslugio_verified_proxies = self.inp_proxy
+            self.uslugio_verified_proxies = []
 
             # Использованные прокси uslugio
             self.uslugio_used_proxies = []
@@ -65,10 +69,14 @@ class InitialData(InputOutput.IntPut, InputOutput.OutPut):
         self.md['Город'] = self.inp_city
         self.md['Ключевые_слова'] = self.inp_key_words
         self.md['Показывать_браузер'] = self.inp_show_browser
-        self.md['Прокси_сервера'] = self.inp_proxy
+        self.md['Прокси_сервера'] = []
+        self.md['Path_excel_uslugio'] = self.inp_path_excel_uslugio
+        self.md['Name_excel_uslugio'] = self.inp_name_excel_uslugio
+        self.md['Продолжить_файл_uslugio'] = self.inp_continuation_uslugio
+        self.md['Перезапись_файла_uslugio'] = self.inp_rewriting_uslugio
 
         temp_md = {}
         temp_md.update(self.md)
-        setting_json = open('myLibrary/setting.txt', 'w')
+        setting_json = open('setting.txt', 'w')
         json.dump(temp_md, setting_json, sort_keys=True, indent=4, ensure_ascii=False)
         setting_json.close()

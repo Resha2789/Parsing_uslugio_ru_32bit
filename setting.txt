@@ -1,0 +1,21 @@
+{
+    "Name_excel_uslugio": "Test.xlsx",
+    "Path_excel_uslugio": "D:/Programming/Python/Parsing_Uslugio_Avito/Test.xlsx",
+    "Город": "Уфа",
+    "Ключевые_слова": [
+        "ЛВС",
+        "wifi"
+    ],
+    "Перезапись_файла_uslugio": false,
+    "Показывать_браузер": true,
+    "Продолжить_файл_uslugio": true,
+    "Прокси_сервера": [],
+    "Размер_окна": [
+        600,
+        300
+    ],
+    "Расположение_окна": [
+        0,
+        0
+    ]
+}

@@ -57,13 +57,24 @@ class ParsingUslugio(DriverChrome.Execute):
                         # Проверяем выполнился ли скрипт
                         if open_item == 'not execute':
                             return self.up_date()  # Перезагружаем страницу
+
+
+                        self.set_proxy(proxy=True, change=False)
+
                         if open_item:
                             # Номер телефона
-                            phone = self.execute_js(tr=10, sl=1, rt=True, t=2, exit_loop=True, data=f"get_phone()")
+                            phone = self.execute_js(tr=20, sl=3, rt=True, t=2, exit_loop=False, data=f"get_phone()")
                             # Проверяем выполнился ли скрипт или если вернул False
                             if 'not execute' == phone or not phone or 'error' == phone:
-                                time.sleep(260)
-                                return self.up_date()
+                                m.uslugio_verified_proxies = m.uslugio_verified_proxies[1:]
+                                m.Commun.uslugio_proxy_update.emit(m.uslugio_verified_proxies)
+                                # self.set_proxy(proxy=True, change=True)
+                                continue
+
+                            print(f'phone {phone}')
+
+                            # self.set_proxy(proxy=False, change=False)
+
                             m.out_phone_number.append(phone)
 
                             # Имя
@@ -78,6 +89,7 @@ class ParsingUslugio(DriverChrome.Execute):
                             # key_word
                             m.out_key_word.append(u.key_word)
 
+                            m.out_uslugio_all_data.append([m.out_full_name[-1], m.out_service[-1], m.out_phone_number[-1], m.out_key_word[-1],  m.out_city[-1]])
                             print(f"{len(m.out_service)}. Имя: {m.out_full_name[-1]}, Услуги: {m.out_service[-1]}, тел. {phone}, key_word: {m.out_key_word[-1]}")
 
                             # Стоп парсинг

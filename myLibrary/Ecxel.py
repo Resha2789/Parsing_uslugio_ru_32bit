@@ -39,9 +39,9 @@ class ExcelWrite:
                             break
 
                 if self.book == None:
-                    self.book = self.excel.Workbooks.Open(f"""{m.inp_path_excel_uslugio}""")
+                    self.book = self.excel.Workbooks.Open(m.inp_path_excel_uslugio)
 
-                self.sheet = self.book.Sheets(1)
+                self.sheet = self.book.Sheets("Sheet")
                 self.open_excel = True
                 print(f"open_excel {m.inp_name_excel_uslugio}")
 
@@ -64,22 +64,20 @@ class ExcelWrite:
             return False
 
     def write_to_excel(self, data=None, row=0):
-        m: MainWindow.MainWindow
-        m = self.mainWindow
 
-        try:
-            self.sheet.Cells.ClearContents()
-            for line in data:
-                row += 1
-                self.sheet.Range(self.sheet.Cells(row, 1), self.sheet.Cells(row, len(line))).Value = line
+        self.sheet.Cells.ClearContents()
+        for line in data:
+            row += 1
+            self.sheet.Range(self.sheet.Cells(row, 1), self.sheet.Cells(row, len(line))).Value = line
 
-            self.exit_excel()
-            return True
-
-        except Exception as error:
-            print(f"write_to_excel {error}")
-            print(f"Данные не сохранились (что-та пошло не так) {m.inp_name_excel_uslugio}")
-            return False
+        self.excel.Application.DisplayAlerts = False
+        self.excel.ScreenUpdating = True
+        self.book.Save()
+        self.book.Close()
+        self.sheet = None
+        self.book = None
+        self.excel.Quit()
+        self.excel = None
 
     def read_from_excel(self):
         m: MainWindow.MainWindow
@@ -90,8 +88,6 @@ class ExcelWrite:
             data = self.sheet.Range(self.sheet.Cells(1, 1), self.sheet.Cells(rows, 5)).Value
 
             row = 1
-            m.out_service = []
-            m.out_uslugio_all_data = []
             for i in data:
                 # m.out_uslugio_all_data.append([m.out_full_name[-1], m.out_service[-1], m.out_phone_number[-1], m.out_key_word[-1],  m.out_city[-1]])
                 if i[1] is None:
@@ -100,21 +96,9 @@ class ExcelWrite:
                 m.out_service.append(i[1])
                 m.out_uslugio_all_data.append([i[0], i[1], i[2], i[3], i[4]])
 
-            print(f"Данные загрузились {m.inp_name_excel_uslugio}: {rows} строк")
-            self.exit_excel()
+            print(f"read_from_excel количество строк {rows}")
             return True
 
         except Exception as error:
             print(f"read_from_excel {error}")
-            print(f"Данные не загрузились (что-та пошло не так) {m.inp_name_excel_uslugio}")
             return False
-
-    def exit_excel(self):
-        self.excel.Application.DisplayAlerts = False
-        self.excel.ScreenUpdating = True
-        self.book.Save()
-        self.book.Close()
-        self.sheet = None
-        self.book = None
-        self.excel.Quit()
-        self.excel = None

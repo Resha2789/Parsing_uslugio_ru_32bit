@@ -6,9 +6,9 @@ from myLibrary.My_pyqt5 import Uslugio_avito_parsing
 from myLibrary.InitialData import InitialData
 from myLibrary.UslugioLibrary.UslugioParsing import UslugioThreading
 from myLibrary.UslugioLibrary.UslugioFindProxy import UslugioFindProxyThreading
-from myLibrary import Loger, Slug
-from selenium import webdriver
+from myLibrary import Loger, Ecxel
 from get_gecko_driver import GetGeckoDriver
+
 
 import socket
 import time, datetime
@@ -23,7 +23,7 @@ class Communicate(QObject):
     uslugio_restart_thread = QtCore.pyqtSignal(object)
 
 
-class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Loger.OutLogger, Loger.OutputLogger, InitialData, Slug.Slugify):
+class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Loger.OutLogger, Loger.OutputLogger, InitialData):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
@@ -45,26 +45,37 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
         # Город
         self.lineEdit_uslugio_city.setText(self.inp_city)
         # Ключевые слова
-        self.lineEdit_uslugio_key_words.setText(self.key_words_str)
-        # Прокси сервера
-        self.textEdit_uslugio_proxy.setText(self.proxy_str)
+        self.textBrowser_uslugio_key_words.setText(self.key_words_str)
         # Показывать браузер
         if self.inp_show_browser:
             self.checkBox_uslugio_show_brawser.setChecked(True)
+        # Дерриктория файла excel uslugio
+        self.pushButton_uslugio_file.setText(f"Файл Excel: {self.inp_path_excel_uslugio}")
+        # Продолжить файл excel uslugio
+        if self.inp_continuation_uslugio:
+            self.checkBox_uslugio_continuation.setChecked(True)
+        else:
+            self.checkBox_uslugio_rewriting.setChecked(True)
 
     def set_connect(self):
-        # Поиск прокси
-        self.pushButton_uslugio_find_proxy.clicked.connect(self.start_uslugio_find_proxy)
         # СТАРТ парсинга
         self.pushButton_uslugio_start.clicked.connect(self.start_uslugio_thread)
         # СТОП парсинг
         self.pushButton_uslugio_stop.clicked.connect(self.uslugio_stop_threading)
+        # Выбыр файла Excel uslugio
+        self.pushButton_uslugio_file.clicked.connect(self.uslugio_select_file)
+        # Продолжить запись uslugio
+        self.checkBox_uslugio_continuation.clicked.connect(self.check_box_uslugio_continuation)
+        # Перезаписать файл uslugio
+        self.checkBox_uslugio_rewriting.clicked.connect(self.check_box_uslugio_rewriting)
+
         # Обновляем прогрес бар
         self.Commun.uslugio_progressBar.connect(self.uslugio_progressBar)
         # Обновляем прокси сервера
         self.Commun.uslugio_proxy_update.connect(self.uslugio_proxy_update)
         # Перезагрузка потока UslugioThreading
         self.Commun.uslugio_restart_thread.connect(self.uslugio_restart_threading)
+
 
         # Вывод сообщений в консоль
         self.OUTPUT_LOGGER_STDOUT.emit_write.connect(self.append_log)
@@ -74,7 +85,7 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
         self.lineEdit_uslugio_city.textChanged.connect(self.set_city)
 
         # Записываем ключевые слова
-        self.lineEdit_uslugio_key_words.textChanged.connect(self.set_key_words)
+        self.textBrowser_uslugio_key_words.textChanged.connect(self.set_key_words)
 
         # Записываем прокси сервера
         self.textEdit_uslugio_proxy.textChanged.connect(self.set_proxy)
@@ -87,7 +98,7 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
         if self.uslugio_find_proxy_threading is None:
             self.uslugio_find_proxy_threading = UslugioFindProxyThreading(mainWindow=self,
                                                                           url='https://hidemy.name/ru/proxy-list/?type=s#list',
-                                                                          browser=True,
+                                                                          browser=False,
                                                                           js='myLibrary/JsLibrary/ProxyJsLibrary.js')
 
         self.log = True
@@ -96,6 +107,11 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
     def start_uslugio_thread(self):
         self.parsing_uslugio = True
         self.start_uslugio_find_proxy()
+
+        if self.inp_continuation_uslugio:
+            excel = Ecxel.ExcelWrite(mainWindow=self)
+            excel.load_work_book()
+            excel.read_from_excel()
 
         # Запускаем дополнительный поток Uslugio.com
         if self.uslugio_threading is None:
@@ -123,57 +139,24 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
         self.start_uslugio_thread()
 
     def uslugio_stop_threading(self, data):
-        # self.uslugio_threading.driver.refresh()
+        excel = Ecxel.ExcelWrite(mainWindow=self)
+        excel.load_work_book()
+        excel.write_to_excel(self.out_uslugio_all_data)
 
-        profile = webdriver.FirefoxProfile()
-        profile.set_preference("general.useragent.override", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36")
-        driver = webdriver.Firefox(profile)
-        driver.get("https://uslugio.com/Ufa?search=%D0%9B%D0%92%D0%A1")
-        self.seting_proxy(driver, ssl_addr="51.222.21.93", ssl_port=32768)
+        print(f"uslugio_stop_threading {data}")
+        self.parsing_uslugio = False
+        if self.uslugio_threading is not None:
+            if self.uslugio_threading.driver is not None:
+                self.uslugio_threading.driver.quit()
+                self.uslugio_threading.driver = None
+            self.uslugio_threading = None
 
-        driver.execute_script("console.log('hie')")
-        print(driver.title)
-        # driver.quit()
-
-        # print(f"uslugio_stop_threading {data}")
-        # self.parsing_uslugio = False
-        # if self.uslugio_threading is not None:
-        #     if self.uslugio_threading.driver is not None:
-        #         self.uslugio_threading.driver.quit()
-        #         self.uslugio_threading.driver = None
-        #         # self.uslugio_threading.driver.driver.get('')
-        #         # self.uslugio_threading.driver.quit()
-        #     # self.uslugio_threading = None
-        #
-        # if self.uslugio_find_proxy_threading is not None:
-        #     if self.uslugio_find_proxy_threading.driver is not None:
-        #         self.uslugio_find_proxy_threading.driver.set_page_load_timeout(0)
-        #         self.uslugio_find_proxy_threading.driver.quit()
-        #         self.uslugio_find_proxy_threading.driver = None
-        #     # self.uslugio_find_proxy_threading = None
+        if self.uslugio_find_proxy_threading is not None:
+            if self.uslugio_find_proxy_threading.driver is not None:
+                self.uslugio_find_proxy_threading.driver.quit()
+                self.uslugio_find_proxy_threading.driver = None
+            self.uslugio_find_proxy_threading = None
         print("Программа завершена")
-
-    # def stop_uslugio_parsing(self):
-    #     if self.uslugio_threading is not None:
-    #         self.uslugio_threading.stop_parsing = True
-
-    def seting_proxy(self, driver, http_addr='', http_port=0, ssl_addr='', ssl_port=0, socks_addr='', socks_port=0):
-
-        driver.execute("SET_CONTEXT", {"context": "chrome"})
-
-        try:
-            driver.execute_script("""
-              Services.prefs.setIntPref('network.proxy.type', 1);
-              Services.prefs.setCharPref("network.proxy.http", arguments[0]);
-              Services.prefs.setIntPref("network.proxy.http_port", arguments[1]);
-              Services.prefs.setCharPref("network.proxy.ssl", arguments[2]);
-              Services.prefs.setIntPref("network.proxy.ssl_port", arguments[3]);
-              Services.prefs.setCharPref('network.proxy.socks', arguments[4]);
-              Services.prefs.setIntPref('network.proxy.socks_port', arguments[5]);
-              """, http_addr, http_port, ssl_addr, ssl_port, socks_addr, socks_port)
-
-        finally:
-            driver.execute("SET_CONTEXT", {"context": "content"})
 
     def append_log(self, text, severity):
         if len(text) > 3:
@@ -199,7 +182,7 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
             self.uslugio_find_proxy_threading = None
 
     def set_city(self, val):
-        self.inp_city = self.slugify(val)
+        self.inp_city = val
 
     def set_key_words(self, val):
         data = re.split(r'[,.]+\s*', val)
@@ -237,3 +220,28 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
         for i in data:
             self.proxy_str += f"{i}\n"
         self.textEdit_uslugio_proxy.setText(self.proxy_str)
+
+    def uslugio_select_file(self):
+        directory = QtWidgets.QFileDialog.getOpenFileName(self, "Выберите файл: Excel")
+        print(directory[0])
+        # открыть диалог выбора директории и установить значение переменной
+        if directory:  # не продолжать выполнение, если пользователь не выбрал директорию
+            self.pushButton_uslugio_file.setText(f"Файл Excel: {directory[0]}")
+            self.inp_path_excel_uslugio = directory[0]
+            self.inp_name_excel_uslugio = re.sub(r'.*[/]+', '', directory[0])
+            self.update_json()
+
+    def check_box_uslugio_continuation(self):
+        if self.checkBox_uslugio_continuation.isChecked():
+            self.checkBox_uslugio_rewriting.setChecked(False)
+            self.inp_continuation_uslugio = True
+            self.inp_rewriting_uslugio = False
+            self.update_json()
+
+
+    def check_box_uslugio_rewriting(self):
+        if self.checkBox_uslugio_rewriting.isChecked():
+            self.checkBox_uslugio_continuation.setChecked(False)
+            self.inp_continuation_uslugio = False
+            self.inp_rewriting_uslugio = True
+            self.update_json()

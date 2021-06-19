@@ -1,6 +1,7 @@
 import re
 
 from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.proxy import Proxy, ProxyType
 from webdriver_manager.chrome import ChromeDriverManager
@@ -26,6 +27,7 @@ class StartDriver(ProxyCheck.ProxyCheck):
         self.set_url = url
         self.total_person = None
         self.time_out = 0
+        self.proxy_installed = False
 
     def star_driver(self, url=None, proxy=True):
         m: MainWindow.MainWindow
@@ -47,25 +49,15 @@ class StartDriver(ProxyCheck.ProxyCheck):
                 print("ERROR DRIVER CLOSE:", detail)
 
         print(f"DRIVER START")
-        options = self.options(proxy=proxy)
 
         try:
-            # Запускаем webDriverChrome
-            # socket.setdefaulttimeout(1)
-            self.driver = webdriver.Chrome(executable_path=ChromeDriverManager().install(), chrome_options=options)
-            self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-            self.driver.execute_cdp_cmd('Network.setUserAgentOverride', {
-                "userAgent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36'})
-            self.driver.set_page_load_timeout(120)
-            # Загружаем сайт по ссылке url
-            self.driver.implicitly_wait(30)
+            # Запускаем webDriverFirefox
+            profile = self.get_profile()[0]
+            options = self.get_profile()[1]
+            self.driver = webdriver.Firefox(firefox_profile=profile, options=options)
             self.driver.get(url)
 
             print("Заргузка страницы успешна прошла.")
-        except TimeoutException:
-            print("Страница загрузилась не доконца.")
-            return True
-
 
         except Exception as detail:
             # self.driver_closed = False
@@ -94,8 +86,6 @@ class StartDriver(ProxyCheck.ProxyCheck):
                     if self.driver is not None:
                         print(f"TIME_OUT_THREAD!")
                         self.driver.close()
-                        # Посылаем сигнал на главное окно для презагрузки потока
-                        m.Commun.uslugio_restart_thread.emit({'data': True})
                 time.sleep(5)
 
             except Exception as detail:
@@ -110,52 +100,70 @@ class StartDriver(ProxyCheck.ProxyCheck):
 
         return
 
-    def options(self, proxy=True):
+    def get_profile(self):
         m: MainWindow.MainWindow
         m = self.mainWindow
 
-        # Устанавливаем опции для webdriverChrome
-        options = webdriver.ChromeOptions()
+        profile = webdriver.FirefoxProfile()
+        profile.set_preference("general.useragent.override",
+                               "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36")
 
-        prefs = {'profile.default_content_setting_values': {'cookies': 2, 'images': 2,
-                                                            'plugins': 2, 'popups': 2, 'geolocation': 2,
-                                                            'notifications': 2, 'auto_select_certificate': 2, 'fullscreen': 2,
-                                                            'mouselock': 2, 'mixed_script': 2, 'media_stream': 2,
-                                                            'media_stream_mic': 2, 'media_stream_camera': 2, 'protocol_handlers': 2,
-                                                            'ppapi_broker': 2, 'automatic_downloads': 2, 'midi_sysex': 2,
-                                                            'push_messaging': 2, 'ssl_cert_decisions': 2, 'metro_switch_to_desktop': 2,
-                                                            'protected_media_identifier': 2, 'app_banner': 2, 'site_engagement': 2,
-                                                            'durable_storage': 2}}
+        # Disable CSS
+        profile.set_preference('permissions.default.stylesheet', 2)
+        # Disable images
+        profile.set_preference('permissions.default.image', 2)
+        # Disable Flash
+        profile.set_preference('dom.ipc.plugins.enabled.libflashplayer.so', 'false')
 
-        options.add_experimental_option('prefs', prefs)
-        options.add_argument("disable-infobars")
-        options.add_argument("--disable-extensions")
-        options.add_argument("ignore-certificate-errors")
-        # Развернуть на весь экран
-        options.add_argument("start-maximized")
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        options.add_experimental_option('useAutomationExtension', False)
-        # Утсанавливаем запрет на загрузку изоброжении
-        options.add_argument('--blink-settings=imagesEnabled=false')
+        options = Options()
+
         # Показать браузер
         if not self.show_browser:
             # Не показываем веб браузер
-            options.add_argument('headless')
+            options.add_argument('--headless')
+
+
+        return [profile, options]
+
+    def set_proxy(self, proxy=True, change=False, http_addr='', http_port=0, ssl_addr='', ssl_port=0, socks_addr='', socks_port=0):
+
+        m: MainWindow.MainWindow
+        m = self.mainWindow
 
         if proxy:
-            while len(m.uslugio_verified_proxies) == 0:
-                if not m.parsing_uslugio:
-                    return
-                print(f"Ждем прокси...")
-                time.sleep(2)
-            else:
-                print(f"Опция proxy-server {m.uslugio_verified_proxies[0]}")
-                # options.add_argument('--proxy-server=%s' % m.uslugio_verified_proxies[0])
-                # m.uslugio_used_proxies.append(m.uslugio_verified_proxies[0])
-                # m.uslugio_verified_proxies = m.uslugio_verified_proxies[1:]
-                m.Commun.uslugio_proxy_update.emit(m.uslugio_verified_proxies)
+            if change or len(m.uslugio_verified_proxies) == 0:
+                while len(m.uslugio_verified_proxies) == 0:
+                    if not m.parsing_uslugio:
+                        return
+                    print(f"Ждем прокси...")
+                    time.sleep(2)
+                else:
+                    print(f"Работаем через прокси: {m.uslugio_verified_proxies[0]}")
+                    ssl_addr = m.uslugio_verified_proxies[0].split(':')[0]
+                    ssl_port = int(m.uslugio_verified_proxies[0].split(':')[1])
 
-        return options
+                    m.uslugio_used_proxies.append(m.uslugio_verified_proxies[0])
+                    m.uslugio_verified_proxies = m.uslugio_verified_proxies[1:]
+                    m.Commun.uslugio_proxy_update.emit(m.uslugio_verified_proxies)
+            else:
+                ssl_addr = m.uslugio_verified_proxies[0].split(':')[0]
+                ssl_port = int(m.uslugio_verified_proxies[0].split(':')[1])
+
+        self.driver.execute("SET_CONTEXT", {"context": "chrome"})
+
+        try:
+            self.driver.execute_script("""
+              Services.prefs.setIntPref('network.proxy.type', 1);
+              Services.prefs.setCharPref("network.proxy.http", arguments[0]);
+              Services.prefs.setIntPref("network.proxy.http_port", arguments[1]);
+              Services.prefs.setCharPref("network.proxy.ssl", arguments[2]);
+              Services.prefs.setIntPref("network.proxy.ssl_port", arguments[3]);
+              Services.prefs.setCharPref('network.proxy.socks', arguments[4]);
+              Services.prefs.setIntPref('network.proxy.socks_port', arguments[5]);
+              """, http_addr, http_port, ssl_addr, ssl_port, socks_addr, socks_port)
+
+        finally:
+            self.driver.execute("SET_CONTEXT", {"context": "content"})
 
 
 class Execute(StartDriver):
@@ -259,6 +267,9 @@ class Execute(StartDriver):
         :param data: Название скрипта
         :return: Возвращает ответ если rt=True
         """
+        m: MainWindow.MainWindow
+        m = self.mainWindow
+
         if sl > 0:
             time.sleep(sl)  # Засыпаем
 
@@ -266,6 +277,8 @@ class Execute(StartDriver):
             # Запускаем javaScript в браузере и получаем результат
             result = self.driver.execute_script(f"return {data}")
         except Exception as detail:
+            if not m.parsing_uslugio:
+                return
             print(f"EXCEPT execute_js: {data}")
             print("ERROR:", detail)
             if exit_loop:
@@ -276,9 +289,8 @@ class Execute(StartDriver):
 
         # Если результа False и count_recurs < tr засыпаем на 2 сек. и запускаем рекурсию (рекурсия на случие если элемент не успел появится)
         if not result and self.count_recurs < tr:
-            time.sleep(2)
             self.count_recurs += 1  # Увеличиваем счетчик рекурсии на +1
-            return self.execute_js(tr=tr, sl=0, rt=rt, t=t, data=data)  # Рекурсия с темеже параметрами
+            return self.execute_js(tr=tr, sl=sl, rt=rt, t=t, exit_loop=exit_loop, data=data)  # Рекурсия с темеже параметрами
 
         # Результат False то возвращам по условию значение (Данных нет, 0, False)
         if not result:
