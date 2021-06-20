@@ -1,10 +1,14 @@
 {
     "Name_excel_uslugio": "Test.xlsx",
     "Path_excel_uslugio": "D:/Programming/Python/Parsing_Uslugio_Avito/Test.xlsx",
-    "Город": "Уфа",
+    "Город": "Москва",
     "Ключевые_слова": [
+        "СКС",
+        "ВОЛС",
         "ЛВС",
-        "wifi"
+        "Сотовые вышки",
+        "IP-телефония АТС",
+        "ОПС"
     ],
     "Перезапись_файла_uslugio": false,
     "Показывать_браузер": true,

@@ -54,6 +54,7 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setPointSize(10)
         self.textBrowser_uslugio_key_words.setFont(font)
+        self.textBrowser_uslugio_key_words.setStyleSheet("")
         self.textBrowser_uslugio_key_words.setFrameShape(QtWidgets.QFrame.Box)
         self.textBrowser_uslugio_key_words.setFrameShadow(QtWidgets.QFrame.Raised)
         self.textBrowser_uslugio_key_words.setReadOnly(False)
@@ -128,6 +129,11 @@ class Ui_MainWindow(object):
         self.checkBox_uslugio_rewriting.setTristate(False)
         self.checkBox_uslugio_rewriting.setObjectName("checkBox_uslugio_rewriting")
         self.formLayout.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.checkBox_uslugio_rewriting)
+        self.pushButton_uslugio_file_open = QtWidgets.QPushButton(self.frame_7)
+        self.pushButton_uslugio_file_open.setObjectName("pushButton_uslugio_file_open")
+        self.formLayout.setWidget(4, QtWidgets.QFormLayout.SpanningRole, self.pushButton_uslugio_file_open)
+        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.formLayout.setItem(3, QtWidgets.QFormLayout.LabelRole, spacerItem)
         self.horizontalLayout_6.addWidget(self.frame_7)
         self.gridLayout.addWidget(self.frame_5, 3, 1, 1, 1)
         self.frame_3 = QtWidgets.QFrame(self.frame)
@@ -169,6 +175,7 @@ class Ui_MainWindow(object):
         self.pushButton_uslugio_start.setObjectName("pushButton_uslugio_start")
         self.horizontalLayout_2.addWidget(self.pushButton_uslugio_start)
         self.pushButton_uslugio_stop = QtWidgets.QPushButton(self.frame_4)
+        self.pushButton_uslugio_stop.setEnabled(False)
         self.pushButton_uslugio_stop.setObjectName("pushButton_uslugio_stop")
         self.horizontalLayout_2.addWidget(self.pushButton_uslugio_stop)
         self.verticalLayout_2.addWidget(self.frame_4)
@@ -191,16 +198,22 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Парсер"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Сборщик данных"))
         self.groupBox.setTitle(_translate("MainWindow", "uslugio.com"))
         self.label.setText(_translate("MainWindow", "Город"))
         self.label_2.setText(_translate("MainWindow", "Ключевые\n"
 "слова "))
+        self.textBrowser_uslugio_key_words.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:10pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>"))
         self.label_3.setText(_translate("MainWindow", "Прокси\n"
 "сервера"))
         self.label_4.setText(_translate("MainWindow", "Показать браузер"))
         self.label_5.setText(_translate("MainWindow", "Продолжить"))
         self.label_6.setText(_translate("MainWindow", "Заново начать"))
+        self.pushButton_uslugio_file_open.setText(_translate("MainWindow", "Откр."))
         self.pushButton_uslugio_file.setText(_translate("MainWindow", "Файл Excel:"))
         self.pushButton_uslugio_start.setText(_translate("MainWindow", "START"))
         self.pushButton_uslugio_stop.setText(_translate("MainWindow", "STOP"))

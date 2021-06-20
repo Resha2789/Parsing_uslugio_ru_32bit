@@ -1,15 +1,10 @@
 import re
-
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
-from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.common.proxy import Proxy, ProxyType
-from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
 from myLibrary import ProxyCheck
 from myLibrary import MainWindow
 from datetime import datetime, timedelta
 import time
-import socket
 
 
 # Запуск WebDriverChrome
@@ -21,6 +16,7 @@ class StartDriver(ProxyCheck.ProxyCheck):
         m: MainWindow.MainWindow
         m = self.mainWindow
 
+        self.driver_path = 'geckodriver.exe'
         self.driver = None
         self.show_browser = browser
         self.driver_closed = False
@@ -41,7 +37,7 @@ class StartDriver(ProxyCheck.ProxyCheck):
         if self.driver is not None:
             try:
                 print(f"DRIVER CLOSE")
-                self.driver.close()
+                self.driver.quit()
                 time.sleep(4)
                 self.driver = None
             except Exception as detail:
@@ -54,7 +50,7 @@ class StartDriver(ProxyCheck.ProxyCheck):
             # Запускаем webDriverFirefox
             profile = self.get_profile()[0]
             options = self.get_profile()[1]
-            self.driver = webdriver.Firefox(firefox_profile=profile, options=options)
+            self.driver = webdriver.Firefox(executable_path=self.driver_path, firefox_profile=profile, options=options)
             self.driver.get(url)
 
             print("Заргузка страницы успешна прошла.")
@@ -79,13 +75,13 @@ class StartDriver(ProxyCheck.ProxyCheck):
                 if self.total_person != len(m.out_phone_number):
                     self.total_person = len(m.out_phone_number)
                     self.time_out = datetime.now() + timedelta(minutes=5)
-                    print(f"START TIME_OUT_THREAD {str(self.time_out)}")
+                    # print(f"START TIME_OUT_THREAD {str(self.time_out)}")
 
                 if datetime.now() > self.time_out:
                     self.time_out = datetime.now() + timedelta(minutes=5)
                     if self.driver is not None:
                         print(f"TIME_OUT_THREAD!")
-                        self.driver.close()
+                        self.driver.quit()
                 time.sleep(5)
 
             except Exception as detail:
@@ -115,13 +111,13 @@ class StartDriver(ProxyCheck.ProxyCheck):
         # Disable Flash
         profile.set_preference('dom.ipc.plugins.enabled.libflashplayer.so', 'false')
 
-        options = Options()
+        options = webdriver.FirefoxOptions()
 
         # Показать браузер
         if not self.show_browser:
             # Не показываем веб браузер
-            options.add_argument('--headless')
-
+            # webdriver.Firefox.
+            options.add_argument('-headless')
 
         return [profile, options]
 

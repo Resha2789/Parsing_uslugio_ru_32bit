@@ -1,17 +1,12 @@
 import re
-from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtWidgets import QWidget, QTableWidgetItem, QAbstractItemView
+from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import QObject
 from myLibrary.My_pyqt5 import Uslugio_avito_parsing
 from myLibrary.InitialData import InitialData
 from myLibrary.UslugioLibrary.UslugioParsing import UslugioThreading
 from myLibrary.UslugioLibrary.UslugioFindProxy import UslugioFindProxyThreading
 from myLibrary import Loger, Ecxel
-from get_gecko_driver import GetGeckoDriver
-
-
-import socket
-import time, datetime
+import win32com.client
 
 
 class Communicate(QObject):
@@ -21,6 +16,7 @@ class Communicate(QObject):
     uslugio_progressBar = QtCore.pyqtSignal(object)
     uslugio_proxy_update = QtCore.pyqtSignal(object)
     uslugio_restart_thread = QtCore.pyqtSignal(object)
+    uslugio_change_key_words = QtCore.pyqtSignal(object)
 
 
 class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Loger.OutLogger, Loger.OutputLogger, InitialData):
@@ -37,9 +33,7 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
 
         self.set_value()
         self.set_connect()
-
-        get_driver = GetGeckoDriver()
-        get_driver.install()
+        # self.set_event_filter()
 
     def set_value(self):
         # Город
@@ -56,6 +50,8 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
             self.checkBox_uslugio_continuation.setChecked(True)
         else:
             self.checkBox_uslugio_rewriting.setChecked(True)
+        # Кнопка открытия файла Excel
+        self.pushButton_uslugio_file_open.setText(f"Отк. {self.inp_name_excel_uslugio}")
 
     def set_connect(self):
         # СТАРТ парсинга
@@ -68,6 +64,8 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
         self.checkBox_uslugio_continuation.clicked.connect(self.check_box_uslugio_continuation)
         # Перезаписать файл uslugio
         self.checkBox_uslugio_rewriting.clicked.connect(self.check_box_uslugio_rewriting)
+        # Кнопка открытия Excel файла uslugio
+        self.pushButton_uslugio_file_open.clicked.connect(self.file_open_uslugio)
 
         # Обновляем прогрес бар
         self.Commun.uslugio_progressBar.connect(self.uslugio_progressBar)
@@ -75,7 +73,8 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
         self.Commun.uslugio_proxy_update.connect(self.uslugio_proxy_update)
         # Перезагрузка потока UslugioThreading
         self.Commun.uslugio_restart_thread.connect(self.uslugio_restart_threading)
-
+        # Обновляем textBrowser_uslugio_key_words
+        self.Commun.uslugio_change_key_words.connect(self.set_key_words)
 
         # Вывод сообщений в консоль
         self.OUTPUT_LOGGER_STDOUT.emit_write.connect(self.append_log)
@@ -93,35 +92,54 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
         # Записываем отображение браузера
         self.checkBox_uslugio_show_brawser.clicked.connect(self.set_show_browser)
 
+    def set_event_filter(self):
+
+        # EventFilter на виджет ключевые слова
+        self.textBrowser_uslugio_key_words.installEventFilter(self)
+
+    def eventFilter(self, source, event):
+        # Вес на роторе
+        if source.objectName() == self.textBrowser_uslugio_key_words.objectName():
+            if event.type() == QtCore.QEvent.Leave:
+                print(self.textBrowser_uslugio_key_words.toPlainText())
+
+        return False
+
     def start_uslugio_find_proxy(self):
+        pass
         # Запускаем дополнительный поток Uslugio.com
         if self.uslugio_find_proxy_threading is None:
             self.uslugio_find_proxy_threading = UslugioFindProxyThreading(mainWindow=self,
                                                                           url='https://hidemy.name/ru/proxy-list/?type=s#list',
                                                                           browser=False,
-                                                                          js='myLibrary/JsLibrary/ProxyJsLibrary.js')
+                                                                          js='javaScript/ProxyJsLibrary.js')
 
         self.log = True
         self.uslugio_find_proxy_threading.start()
 
     def start_uslugio_thread(self):
+
         self.parsing_uslugio = True
         self.start_uslugio_find_proxy()
 
+        self.log = True
         if self.inp_continuation_uslugio:
             excel = Ecxel.ExcelWrite(mainWindow=self)
             excel.load_work_book()
-            excel.read_from_excel()
+            if not excel.read_from_excel():
+                pass
 
         # Запускаем дополнительный поток Uslugio.com
         if self.uslugio_threading is None:
             self.uslugio_threading = UslugioThreading(mainWindow=self,
                                                       proxy=self.inp_proxy,
-                                                      browser=True,
-                                                      js='myLibrary/JsLibrary/UslugioJsLibrary.js')
+                                                      browser=self.inp_show_browser,
+                                                      js='javaScript/UslugioJsLibrary.js')
 
         self.log = True
         self.uslugio_threading.start()
+        self.pushButton_uslugio_stop.setEnabled(True)
+        self.pushButton_uslugio_start.setEnabled(False)
 
     def uslugio_restart_threading(self, data):
         if self.uslugio_threading is not None:
@@ -139,11 +157,10 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
         self.start_uslugio_thread()
 
     def uslugio_stop_threading(self, data):
-        excel = Ecxel.ExcelWrite(mainWindow=self)
-        excel.load_work_book()
-        excel.write_to_excel(self.out_uslugio_all_data)
+        # Запись в EXcel
+        if not self.write_to_excel():
+            pass
 
-        print(f"uslugio_stop_threading {data}")
         self.parsing_uslugio = False
         if self.uslugio_threading is not None:
             if self.uslugio_threading.driver is not None:
@@ -157,12 +174,15 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
                 self.uslugio_find_proxy_threading.driver = None
             self.uslugio_find_proxy_threading = None
         print("Программа завершена")
+        self.pushButton_uslugio_stop.setEnabled(False)
+        self.pushButton_uslugio_start.setEnabled(True)
 
     def append_log(self, text, severity):
         if len(text) > 3:
             if severity == self.Severity.ERROR:
-                self.plainTextEdit_uslugio_console.appendPlainText(text)
-                self.update_json()
+                if self.parsing_uslugio:
+                    self.plainTextEdit_uslugio_console.appendPlainText(text)
+                    self.update_json()
             else:
                 self.plainTextEdit_uslugio_console.appendPlainText(text)
 
@@ -184,13 +204,28 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
     def set_city(self, val):
         self.inp_city = val
 
-    def set_key_words(self, val):
-        data = re.split(r'[,.]+\s*', val)
-        self.inp_key_words = []
-        for i in data:
-            if len(i) > 1:
-                self.inp_key_words.append(i)
-        print(self.inp_key_words)
+    def set_key_words(self, data=None):
+        if data is None:
+            val = self.textBrowser_uslugio_key_words.toPlainText()
+            data = re.split(r'[,.]+\s*', val)
+            self.inp_key_words = []
+            for i in data:
+                if len(i) > 1:
+                    self.inp_key_words.append(i)
+            print(self.inp_key_words)
+
+        else:
+            # Ключевые слова
+            self.key_words_str = ''
+            for i in self.inp_key_words:
+                if i == data:
+                    self.key_words_str += f"<b style='color: rgb(0, 203, 30);'>{i}</b>, "
+                else:
+                    self.key_words_str += i + ', '
+            if len(self.key_words_str) > 0:
+                self.key_words_str = re.sub(r'(,\s)$', '', self.key_words_str)
+                self.textBrowser_uslugio_key_words.setText(f"{self.key_words_str}")
+
 
     def set_proxy(self):
         data = re.split(r'[,]+\s*|\n', self.textEdit_uslugio_proxy.toPlainText())
@@ -229,6 +264,8 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
             self.pushButton_uslugio_file.setText(f"Файл Excel: {directory[0]}")
             self.inp_path_excel_uslugio = directory[0]
             self.inp_name_excel_uslugio = re.sub(r'.*[/]+', '', directory[0])
+            # Кнопка открытия файла Excel
+            self.pushButton_uslugio_file_open.setText(f"Отк. {self.inp_name_excel_uslugio}")
             self.update_json()
 
     def check_box_uslugio_continuation(self):
@@ -238,10 +275,25 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
             self.inp_rewriting_uslugio = False
             self.update_json()
 
-
     def check_box_uslugio_rewriting(self):
         if self.checkBox_uslugio_rewriting.isChecked():
             self.checkBox_uslugio_continuation.setChecked(False)
             self.inp_continuation_uslugio = False
             self.inp_rewriting_uslugio = True
             self.update_json()
+
+    def file_open_uslugio(self):
+        if self.uslugio_threading is not None:
+            # Запись в EXcel
+            self.write_to_excel()
+        shell = win32com.client.Dispatch("WScript.Shell")
+        shell.Run(self.inp_path_excel_uslugio)
+
+    def write_to_excel(self):
+        # Запись в файл Excel
+        excel = Ecxel.ExcelWrite(mainWindow=self)
+        if not excel.load_work_book():
+            return False
+        if not excel.write_to_excel(self.out_uslugio_all_data):
+            return False
+        return True

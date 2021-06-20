@@ -41,7 +41,7 @@ class ExcelWrite:
                 if self.book == None:
                     self.book = self.excel.Workbooks.Open(m.inp_path_excel_uslugio)
 
-                self.sheet = self.book.Sheets("Sheet")
+                self.sheet = self.book.Sheets(1)
                 self.open_excel = True
                 print(f"open_excel {m.inp_name_excel_uslugio}")
 
@@ -64,20 +64,23 @@ class ExcelWrite:
             return False
 
     def write_to_excel(self, data=None, row=0):
+        m: MainWindow.MainWindow
+        m = self.mainWindow
 
-        self.sheet.Cells.ClearContents()
-        for line in data:
-            row += 1
-            self.sheet.Range(self.sheet.Cells(row, 1), self.sheet.Cells(row, len(line))).Value = line
+        try:
+            self.sheet.Cells.ClearContents()
+            for line in data:
+                row += 1
+                self.sheet.Range(self.sheet.Cells(row, 1), self.sheet.Cells(row, len(line))).Value = line
 
-        self.excel.Application.DisplayAlerts = False
-        self.excel.ScreenUpdating = True
-        self.book.Save()
-        self.book.Close()
-        self.sheet = None
-        self.book = None
-        self.excel.Quit()
-        self.excel = None
+            self.exit_excel()
+            print(f"Данные сохранились успешно {m.inp_name_excel_uslugio}")
+            return True
+
+        except Exception as error:
+            print(f"write_to_excel {error}")
+            print(f"Данные не сохранились (что-та пошло не так) {m.inp_name_excel_uslugio}")
+            return False
 
     def read_from_excel(self):
         m: MainWindow.MainWindow
@@ -96,9 +99,21 @@ class ExcelWrite:
                 m.out_service.append(i[1])
                 m.out_uslugio_all_data.append([i[0], i[1], i[2], i[3], i[4]])
 
-            print(f"read_from_excel количество строк {rows}")
+            print(f"Данные загрузились {m.inp_name_excel_uslugio}: {rows} строк")
+            self.exit_excel()
             return True
 
         except Exception as error:
             print(f"read_from_excel {error}")
+            print(f"Данные не загрузились (что-та пошло не так) {m.inp_name_excel_uslugio}")
             return False
+
+    def exit_excel(self):
+        self.excel.Application.DisplayAlerts = False
+        self.excel.ScreenUpdating = True
+        self.book.Save()
+        self.book.Close()
+        self.sheet = None
+        self.book = None
+        self.excel.Quit()
+        self.excel = None

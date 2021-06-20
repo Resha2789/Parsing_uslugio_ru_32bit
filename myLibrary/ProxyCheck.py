@@ -34,6 +34,6 @@ class ProxyCheck():
         if self.is_bad_proxy(proxy):
             return False
         else:
-            print(f"Прокси сервер найден")
+
             time.sleep(3)
             return True

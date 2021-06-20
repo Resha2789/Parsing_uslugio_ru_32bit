@@ -41,13 +41,13 @@ class InitialData(InputOutput.IntPut, InputOutput.OutPut):
             self.proxy_str = ''
             for i in self.inp_proxy:
                 self.proxy_str += i + '\n'
-            
+
             # Статус парсинга uslugio
             self.parsing_uslugio = False
-            
+
             # Найденные прокси сервера
             self.uslugio_proxy_finded = []
-            
+
             # Проверенные прокси для uslugio
             self.uslugio_verified_proxies = []
 
@@ -60,7 +60,7 @@ class InitialData(InputOutput.IntPut, InputOutput.OutPut):
             # Стату поиска прокси для uslugio
             self.uslugio_found_proxy = False
 
-        except FileNotFoundError:
+        except Exception as error:
             self.update_json()
             print(f"Данных нет, созданы данные по умолчанию: {self.md}")
 

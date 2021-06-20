@@ -1,6 +1,6 @@
 from myLibrary.UslugioLibrary.UslugioParsingLib import ParsingUslugio
 from PyQt5.QtCore import QThread
-from myLibrary import DriverChrome, MainWindow, Slug
+from myLibrary import MainWindow, Slug
 import threading
 
 
@@ -21,6 +21,9 @@ class UslugioThreading(QThread, ParsingUslugio, Slug.Slugify):
         for i in m.inp_key_words:
             if self.stop_parsing or not m.parsing_uslugio:
                 break
+
+            # Посылаем сигнал на главное окно в textBrowser_uslugio_key_words
+            m.Commun.uslugio_change_key_words.emit(i)
 
             self.key_word = i
             self.url = f"https://uslugio.com/{self.slugify(m.inp_city)}?search={i}"
