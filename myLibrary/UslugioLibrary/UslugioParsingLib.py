@@ -30,6 +30,8 @@ class ParsingUslugio(DriverChrome.Execute):
 
                 show_more = 10
                 while show_more > 0:
+                    if not m.parsing_uslugio:
+                        return
                     # Отображаем всех клиентов
                     show_more = self.execute_js(rt=True, t=2, exit_loop=True, data='show_more()')
                     # Проверяем выполнился ли скрипт
@@ -107,6 +109,8 @@ class ParsingUslugio(DriverChrome.Execute):
                                         show_data = False
                                     time.sleep(1)
 
+                            if not m.parsing_uslugio:
+                                return
                             # Посылаем сигнал на главное окно в прогресс бар uslugio
                             m.Commun.uslugio_progressBar.emit({'i': i, 'items': total})
                             break

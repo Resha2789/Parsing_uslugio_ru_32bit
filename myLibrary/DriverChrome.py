@@ -5,6 +5,8 @@ from myLibrary import ProxyCheck
 from myLibrary import MainWindow
 from datetime import datetime, timedelta
 import time
+import os
+import psutil
 
 
 # Запуск WebDriverChrome
@@ -16,7 +18,7 @@ class StartDriver(ProxyCheck.ProxyCheck):
         m: MainWindow.MainWindow
         m = self.mainWindow
 
-        self.driver_path = 'geckodriver.exe'
+        self.driver_path = 'Все для сборщика данных/geckodriver.exe'
         self.driver = None
         self.show_browser = browser
         self.driver_closed = False
@@ -24,6 +26,13 @@ class StartDriver(ProxyCheck.ProxyCheck):
         self.total_person = None
         self.time_out = 0
         self.proxy_installed = False
+
+    def kill_geckodriver(self):
+        PROCNAME = "geckodriver.exe"  # or chromedriver or IEDriverServer
+        for proc in psutil.process_iter():
+            # check whether the process name matches
+            if proc.name() == PROCNAME:
+                proc.kill()
 
     def star_driver(self, url=None, proxy=True):
         m: MainWindow.MainWindow
@@ -34,23 +43,16 @@ class StartDriver(ProxyCheck.ProxyCheck):
 
         self.set_url = url
 
-        if self.driver is not None:
-            try:
-                print(f"DRIVER QUIT")
-                self.driver.quit()
-                time.sleep(4)
-                self.driver = None
-            except Exception as detail:
-                self.driver = None
-                print("ERROR DRIVER QUIT:", detail)
-
-        print(f"DRIVER START")
-
         try:
             # Запускаем webDriverFirefox
             profile = self.get_profile()[0]
             options = self.get_profile()[1]
-            self.driver = webdriver.Firefox(executable_path=self.driver_path, firefox_profile=profile, options=options)
+            if self.driver is None:
+                self.driver = webdriver.Firefox(executable_path=self.driver_path, firefox_profile=profile, options=options)
+                print(f"DRIVER START {self.set_url}")
+            else:
+                self.driver.refresh()
+                print(f"DRIVER REFRESH {self.set_url}")
             self.driver.get(url)
 
             print("Заргузка страницы успешна прошла.")
@@ -79,9 +81,10 @@ class StartDriver(ProxyCheck.ProxyCheck):
 
                 if datetime.now() > self.time_out:
                     self.time_out = datetime.now() + timedelta(minutes=5)
-                    if self.driver is not None:
+                    if m.uslugio_threading.driver is not None:
                         print(f"TIME_OUT_THREAD!")
-                        self.driver.quit()
+                        print(f"DRIVER REFRESH {m.uslugio_threading.set_url}")
+                        m.uslugio_threading.driver.refresh()
                 time.sleep(5)
 
             except Exception as detail:
@@ -102,7 +105,7 @@ class StartDriver(ProxyCheck.ProxyCheck):
 
         profile = webdriver.FirefoxProfile()
         profile.set_preference("general.useragent.override",
-                               "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36")
+                               "Mozilla / 5.0 (Windows NT 10.0; Win64; x64) AppleWebKit / 537.36 (KHTML, как Gecko) Chrome / 80.0.3987.163 Safari / 537.36 OPR / 67.0.3575.137")
 
         # Disable CSS
         profile.set_preference('permissions.default.stylesheet', 2)

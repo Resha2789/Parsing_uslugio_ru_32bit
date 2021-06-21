@@ -19,7 +19,7 @@ class InitialData(InputOutput.IntPut, InputOutput.OutPut):
     # Считываем данных с setting.txt
     def load_md(self):
         try:
-            self.md = json.load(open('setting.txt'))
+            self.md = json.load(open('Все для сборщика данных/setting.txt'))
             print(f"Данные setting загружены {self.md}")
             self.inp_city = self.md['Город']
             self.inp_key_words = self.md['Ключевые_слова']
@@ -77,6 +77,6 @@ class InitialData(InputOutput.IntPut, InputOutput.OutPut):
 
         temp_md = {}
         temp_md.update(self.md)
-        setting_json = open('setting.txt', 'w')
+        setting_json = open('Все для сборщика данных/setting.txt', 'w')
         json.dump(temp_md, setting_json, sort_keys=True, indent=4, ensure_ascii=False)
         setting_json.close()

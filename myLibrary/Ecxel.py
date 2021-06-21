@@ -74,7 +74,6 @@ class ExcelWrite:
                 self.sheet.Range(self.sheet.Cells(row, 1), self.sheet.Cells(row, len(line))).Value = line
 
             self.exit_excel()
-            print(f"Данные сохранились успешно {m.inp_name_excel_uslugio}")
             return True
 
         except Exception as error:

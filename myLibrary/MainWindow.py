@@ -7,6 +7,7 @@ from myLibrary.UslugioLibrary.UslugioParsing import UslugioThreading
 from myLibrary.UslugioLibrary.UslugioFindProxy import UslugioFindProxyThreading
 from myLibrary import Loger, Ecxel
 import win32com.client
+import threading
 
 
 class Communicate(QObject):
@@ -110,9 +111,9 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
         # Запускаем дополнительный поток Uslugio.com
         if self.uslugio_find_proxy_threading is None:
             self.uslugio_find_proxy_threading = UslugioFindProxyThreading(mainWindow=self,
-                                                                          url='https://hidemy.name/ru/proxy-list/?type=s#list',
-                                                                          browser=False,
-                                                                          js='javaScript/ProxyJsLibrary.js')
+                                                                          url='https://advanced.name/ru/freeproxy?type=https&page=1',
+                                                                          browser=True,
+                                                                          js='Все для сборщика данных/javaScript/ProxyJsLibrary.js')
 
         self.log = True
         self.uslugio_find_proxy_threading.start()
@@ -134,7 +135,7 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
             self.uslugio_threading = UslugioThreading(mainWindow=self,
                                                       proxy=self.inp_proxy,
                                                       browser=self.inp_show_browser,
-                                                      js='javaScript/UslugioJsLibrary.js')
+                                                      js='Все для сборщика данных/javaScript/UslugioJsLibrary.js')
 
         self.log = True
         self.uslugio_threading.start()
@@ -156,26 +157,12 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
             self.uslugio_find_proxy_threading = None
         self.start_uslugio_thread()
 
-    def uslugio_stop_threading(self, data):
-        # Запись в EXcel
-        if not self.write_to_excel():
-            pass
+    def uslugio_stop_threading(self):
 
-        self.parsing_uslugio = False
-        if self.uslugio_threading is not None:
-            if self.uslugio_threading.driver is not None:
-                self.uslugio_threading.driver.quit()
-                self.uslugio_threading.driver = None
-            self.uslugio_threading = None
+        threading.Thread(target=self.uslugio_threading.stop_threading).start()
 
-        if self.uslugio_find_proxy_threading is not None:
-            if self.uslugio_find_proxy_threading.driver is not None:
-                self.uslugio_find_proxy_threading.driver.quit()
-                self.uslugio_find_proxy_threading.driver = None
-            self.uslugio_find_proxy_threading = None
-        print("Программа завершена")
         self.pushButton_uslugio_stop.setEnabled(False)
-        self.pushButton_uslugio_start.setEnabled(True)
+        self.pushButton_uslugio_start.setEnabled(False)
 
     def append_log(self, text, severity):
         if len(text) > 3:
@@ -184,22 +171,16 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
                     self.plainTextEdit_uslugio_console.appendPlainText(text)
                     self.update_json()
             else:
-                self.plainTextEdit_uslugio_console.appendPlainText(text)
+                if self.parsing_uslugio:
+                    self.plainTextEdit_uslugio_console.appendPlainText(text)
+                if re.search(r'^[$](.*)', text):
+                    self.plainTextEdit_uslugio_console.appendPlainText(re.findall(r'^[$](.*)', text)[0])
 
     def closeEvent(self, event):
         self.update_json()
         self.parsing_uslugio = False
         if self.uslugio_threading is not None:
-            if self.uslugio_threading.driver is not None:
-                self.uslugio_threading.driver.quit()
-                self.uslugio_threading.driver = None
-            self.uslugio_threading = None
-
-        if self.uslugio_find_proxy_threading is not None:
-            if self.uslugio_find_proxy_threading.driver is not None:
-                self.uslugio_find_proxy_threading.driver.quit()
-                self.uslugio_find_proxy_threading.driver = None
-            self.uslugio_find_proxy_threading = None
+            self.uslugio_threading.stop_threading()
 
     def set_city(self, val):
         self.inp_city = val
@@ -235,7 +216,6 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
             if len(i) > 1:
                 self.inp_proxy.append(i)
                 self.uslugio_verified_proxies.append(i)
-        print(self.inp_proxy)
 
     def set_show_browser(self):
         if self.checkBox_uslugio_show_brawser.isChecked():
