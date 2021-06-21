@@ -1,8 +1,8 @@
-import time
-
 from PyQt5.QtCore import QThread
 from myLibrary import DriverChrome
 from myLibrary import MainWindow
+from datetime import datetime, timedelta
+import time
 
 
 class UslugioFindProxyThreading(QThread, DriverChrome.Execute):
@@ -12,6 +12,7 @@ class UslugioFindProxyThreading(QThread, DriverChrome.Execute):
         m: MainWindow.MainWindow
         m = self.mainWindow
         self.url_proxy = kwargs.get('url')
+        self.time_out_proxy = None
 
     def run(self):
         m: MainWindow.MainWindow
@@ -38,9 +39,14 @@ class UslugioFindProxyThreading(QThread, DriverChrome.Execute):
 
             # Проверка найденных прокси
             for i in m.uslugio_proxy_finded:
+
+                if self.time_out_proxy is None or datetime.now() > self.time_out_proxy:
+                    self.time_out_proxy = datetime.now() + timedelta(minutes=5)
+                    m.uslugio_verified_proxies, m.uslugio_used_proxies = [], []
+
                 if not m.parsing_uslugio:
                     break
-                if len(m.uslugio_verified_proxies) < 5:
+                if len(m.uslugio_verified_proxies) < 10:
                     if self.proxy_check('https://uslugio.com/', i):
                         if not i in m.uslugio_verified_proxies and not i in m.uslugio_used_proxies:
                             m.uslugio_verified_proxies.append(i)

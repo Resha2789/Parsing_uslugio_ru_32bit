@@ -91,6 +91,8 @@ class ExcelWrite:
             data = self.sheet.Range(self.sheet.Cells(1, 1), self.sheet.Cells(rows, 5)).Value
 
             row = 1
+            m.out_service = []
+            m.out_uslugio_all_data = []
             for i in data:
                 # m.out_uslugio_all_data.append([m.out_full_name[-1], m.out_service[-1], m.out_phone_number[-1], m.out_key_word[-1],  m.out_city[-1]])
                 if i[1] is None:

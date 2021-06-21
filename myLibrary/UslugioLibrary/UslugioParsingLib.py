@@ -57,8 +57,9 @@ class ParsingUslugio(DriverChrome.Execute):
                             open_item = self.execute_js(sl=2, rt=True, t=2, exit_loop=True, data=f"open_item({i})")
                             # Проверяем выполнился ли скрипт
                             if open_item == 'not execute':
-                                continue
-                                # return self.up_date()  # Перезагружаем страницу
+                                if retry <= 4:
+                                    continue
+                                return self.up_date()  # Перезагружаем страницу
 
 
                             self.set_proxy(proxy=True, change=False)
@@ -68,12 +69,11 @@ class ParsingUslugio(DriverChrome.Execute):
                                 phone = self.execute_js(tr=20, sl=3, rt=True, t=2, exit_loop=False, data=f"get_phone()")
                                 # Проверяем выполнился ли скрипт или если вернул False
                                 if 'not execute' == phone or not phone or 'error' == phone:
-                                    m.uslugio_verified_proxies = m.uslugio_verified_proxies[1:]
-                                    m.Commun.uslugio_proxy_update.emit(m.uslugio_verified_proxies)
-                                    # self.set_proxy(proxy=True, change=True)
-                                    continue
-
-                                # self.set_proxy(proxy=False, change=False)
+                                    if retry <= 4:
+                                        m.uslugio_verified_proxies = m.uslugio_verified_proxies[1:]
+                                        m.Commun.uslugio_proxy_update.emit(m.uslugio_verified_proxies)
+                                        continue
+                                    return self.up_date()  # Перезагружаем страницу
 
                                 m.out_phone_number.append(phone)
 
@@ -131,7 +131,7 @@ class ParsingUslugio(DriverChrome.Execute):
             if not m.parsing_uslugio:
                 return
 
-            print(f"Перезагрузка с новым прокси {u.url}")
+            print(f"Перезагрузка driver с новым прокси {u.url}")
 
             # Запус WebDriverChrome
             if not self.star_driver(url=u.url):

@@ -36,13 +36,13 @@ class StartDriver(ProxyCheck.ProxyCheck):
 
         if self.driver is not None:
             try:
-                print(f"DRIVER CLOSE")
+                print(f"DRIVER QUIT")
                 self.driver.quit()
                 time.sleep(4)
                 self.driver = None
             except Exception as detail:
                 self.driver = None
-                print("ERROR DRIVER CLOSE:", detail)
+                print("ERROR DRIVER QUIT:", detail)
 
         print(f"DRIVER START")
 
