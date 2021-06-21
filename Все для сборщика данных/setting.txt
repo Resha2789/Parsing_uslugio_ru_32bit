@@ -1,6 +1,6 @@
 {
-    "Name_excel_uslugio": "Test.xlsx",
-    "Path_excel_uslugio": "D:/Programming/Python/Parsing_Uslugio_Avito/Test.xlsx",
+    "Name_excel_uslugio": "База_данных.xlsx",
+    "Path_excel_uslugio": "D:/Programming/Python/Parsing_uslugio_ru_64bit/База_данных.xlsx",
     "Город": "Москва",
     "Ключевые_слова": [
         "СКС",

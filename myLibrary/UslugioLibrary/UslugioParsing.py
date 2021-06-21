@@ -75,7 +75,7 @@ class UslugioThreading(QThread, ParsingUslugio, Slug.Slugify):
                 self.kill_geckodriver()
                 break
 
-            total += 2
+            total += 10
             # Посылаем сигнал на главное окно в прогресс бар uslugio
             m.Commun.uslugio_progressBar.emit({'i': total, 'items': 100})
             time.sleep(2)
@@ -84,14 +84,14 @@ class UslugioThreading(QThread, ParsingUslugio, Slug.Slugify):
 
         m.log = True
 
-        print(f"$Сбор данных закончили\nВсего собрано: {len(m.out_uslugio_all_data)}")
+        print(f"$Сбор данных закончили\n$Всего собрано: {len(m.out_uslugio_all_data)}")
         if save:
             print(f"$Данные сохранились успешно {m.inp_name_excel_uslugio}")
         else:
             print(f"$Данные не сохранились!")
 
         # Посылаем сигнал на главное окно в прогресс бар uslugio
-        m.Commun.uslugio_progressBar.emit({'i': 100, 'items': 100})
+        m.Commun.uslugio_progressBar.emit({'i': 99, 'items': 100})
         m.pushButton_uslugio_start.setEnabled(True)
         m.uslugio_threading = None
         m.uslugio_find_proxy_threading = None

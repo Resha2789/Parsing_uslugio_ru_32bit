@@ -39,7 +39,7 @@ class ExcelWrite:
                             break
 
                 if self.book == None:
-                    self.book = self.excel.Workbooks.Open(m.inp_path_excel_uslugio)
+                    self.book = self.excel.Workbooks.Open(f"""{m.inp_path_excel_uslugio}""")
 
                 self.sheet = self.book.Sheets(1)
                 self.open_excel = True

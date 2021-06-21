@@ -5,7 +5,7 @@ from myLibrary.My_pyqt5 import Uslugio_avito_parsing
 from myLibrary.InitialData import InitialData
 from myLibrary.UslugioLibrary.UslugioParsing import UslugioThreading
 from myLibrary.UslugioLibrary.UslugioFindProxy import UslugioFindProxyThreading
-from myLibrary import Loger, Ecxel
+from myLibrary import Loger, Ecxel, RequestTime
 import win32com.client
 import threading
 
@@ -16,11 +16,10 @@ class Communicate(QObject):
     uslugio_yandex_change = QtCore.pyqtSignal(object)
     uslugio_progressBar = QtCore.pyqtSignal(object)
     uslugio_proxy_update = QtCore.pyqtSignal(object)
-    uslugio_restart_thread = QtCore.pyqtSignal(object)
     uslugio_change_key_words = QtCore.pyqtSignal(object)
 
 
-class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Loger.OutLogger, Loger.OutputLogger, InitialData):
+class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Loger.OutLogger, Loger.OutputLogger, InitialData, RequestTime.RequestTime):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
@@ -72,8 +71,6 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
         self.Commun.uslugio_progressBar.connect(self.uslugio_progressBar)
         # Обновляем прокси сервера
         self.Commun.uslugio_proxy_update.connect(self.uslugio_proxy_update)
-        # Перезагрузка потока UslugioThreading
-        self.Commun.uslugio_restart_thread.connect(self.uslugio_restart_threading)
         # Обновляем textBrowser_uslugio_key_words
         self.Commun.uslugio_change_key_words.connect(self.set_key_words)
 
@@ -112,7 +109,7 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
         if self.uslugio_find_proxy_threading is None:
             self.uslugio_find_proxy_threading = UslugioFindProxyThreading(mainWindow=self,
                                                                           url='https://advanced.name/ru/freeproxy?type=https&page=1',
-                                                                          browser=True,
+                                                                          browser=False,
                                                                           js='Все для сборщика данных/javaScript/ProxyJsLibrary.js')
 
         self.log = True
@@ -120,10 +117,12 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
 
     def start_uslugio_thread(self):
 
+        if not self.check_time():
+            return
+
         self.parsing_uslugio = True
         self.start_uslugio_find_proxy()
 
-        self.log = True
         if self.inp_continuation_uslugio:
             excel = Ecxel.ExcelWrite(mainWindow=self)
             excel.load_work_book()
@@ -142,21 +141,6 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
         self.pushButton_uslugio_stop.setEnabled(True)
         self.pushButton_uslugio_start.setEnabled(False)
 
-    def uslugio_restart_threading(self, data):
-        if self.uslugio_threading is not None:
-            if self.uslugio_threading.driver is not None:
-                self.uslugio_threading.driver.quit()
-                self.uslugio_threading.driver = None
-            self.uslugio_threading.close()
-            self.uslugio_threading = None
-        if self.uslugio_find_proxy_threading is not None:
-            if self.uslugio_find_proxy_threading.driver is not None:
-                self.uslugio_find_proxy_threading.driver.quit()
-                self.uslugio_find_proxy_threading.driver = None
-            self.uslugio_find_proxy_threading.close()
-            self.uslugio_find_proxy_threading = None
-        self.start_uslugio_thread()
-
     def uslugio_stop_threading(self):
 
         threading.Thread(target=self.uslugio_threading.stop_threading).start()
@@ -170,6 +154,8 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
                 if self.parsing_uslugio:
                     self.plainTextEdit_uslugio_console.appendPlainText(text)
                     self.update_json()
+                if re.search(r'^[$](.*)', text):
+                    self.plainTextEdit_uslugio_console.appendPlainText(text)
             else:
                 if self.parsing_uslugio:
                     self.plainTextEdit_uslugio_console.appendPlainText(text)
@@ -267,7 +253,8 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
             # Запись в EXcel
             self.write_to_excel()
         shell = win32com.client.Dispatch("WScript.Shell")
-        shell.Run(self.inp_path_excel_uslugio)
+        shell.Run(f""""{self.inp_path_excel_uslugio}""")
+
 
     def write_to_excel(self):
         # Запись в файл Excel
