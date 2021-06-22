@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 from bs4.dammit import EncodingDetector
 from datetime import datetime, timedelta
-
+from pymorphy2_dicts_ru import absolute_import
 import requests
 import re
 import pymorphy2
@@ -32,17 +32,19 @@ class RequestTime():
             time = time.find('span', {'class': 'time'}).text
             date = date.find('span', {'class': 'time'}).text
 
-            date = re.findall(r'[:]\s+(.*)\s+год', date)[0]
+            # date = re.findall(r'[:]\s+(.*)\s+год', date)[0]
+            #
+            # month_or = re.findall(r'\w+', date)[1]
+            #
+            # morph = pymorphy2.MorphAnalyzer()
+            # month_cus = morph.parse(month_or)[0]
+            # month_cus = month_cus.inflect({'nomn'}).word
+            # date = re.sub(month_or, month_cus, date)
+            #
+            # date_time_str = f"{date} {time}"
+            # self.date_time = datetime.strptime(date_time_str, '%d %B %Y %H:%M')
 
-            month_or = re.findall(r'\w+', date)[1]
-
-            morph = pymorphy2.MorphAnalyzer()
-            month_cus = morph.parse(month_or)[0]
-            month_cus = month_cus.inflect({'nomn'}).word
-            date = re.sub(month_or, month_cus, date)
-
-            date_time_str = f"{date} {time}"
-            self.date_time = datetime.strptime(date_time_str, '%d %B %Y %H:%M')
+            self.date_time = datetime.now()
 
             return True
         except Exception as error:

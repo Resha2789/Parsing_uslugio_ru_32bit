@@ -253,7 +253,7 @@ class Ui_MainWindow(object):
         self.label_4.setText(_translate("MainWindow", "Показать браузер"))
         self.label_5.setText(_translate("MainWindow", "Продолжить"))
         self.label_6.setText(_translate("MainWindow", "Заново начать"))
-        self.pushButton_uslugio_file_open.setText(_translate("MainWindow", "Откр."))
+        self.pushButton_uslugio_file_open.setText(_translate("MainWindow", "Файл не выбран"))
         self.pushButton_uslugio_file.setText(_translate("MainWindow", "Файл Excel для записи не найден!"))
         self.pushButton_uslugio_start.setText(_translate("MainWindow", "START"))
         self.pushButton_uslugio_stop.setText(_translate("MainWindow", "STOP"))

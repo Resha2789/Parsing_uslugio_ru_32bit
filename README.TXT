@@ -23,6 +23,7 @@ bs4	0.0.1	0.0.1
 certifi	2021.5.30	2021.5.30
 chardet	4.0.0	4.0.0
 colorama	0.4.4	0.4.4
+comtypes	1.1.10	1.1.10
 configparser	5.0.2	5.0.2
 crayons	0.4.0	0.4.0
 docopt	0.6.2	0.6.2
@@ -31,7 +32,7 @@ future	0.18.2	0.18.2
 idna	2.10	3.2
 keyboard	0.13.5	0.13.5
 lxml	4.6.3	4.6.3
-numpy	1.20.3	1.20.3
+numpy	1.20.3	1.21.0
 packaging	20.9	20.9
 pefile	2021.5.24	2021.5.24
 pip	21.1.2	21.1.2
@@ -48,9 +49,8 @@ pywin32-ctypes	0.2.0	0.2.0
 requests	2.25.1	2.25.1
 selenium	3.141.0	3.141.0
 setuptools	57.0.0	57.0.0
-sip	6.1.1	6.1.1
+sip	6.1.1
 six	1.16.0	1.16.0
-soupsieve	2.2.1	2.2.1
-toml	0.10.2	0.10.2
-urllib3	1.26.5	1.26.5
-webdriver-manager	3.4.2	3.4.2
+soupsieve	2.2.1
+toml	0.10.2
+urllib3	1.26.5

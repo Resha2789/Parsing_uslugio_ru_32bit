@@ -5,12 +5,10 @@ from myLibrary.InitialData import InitialData
 from myLibrary.UslugioLibrary.UslugioParsing import UslugioThreading
 from myLibrary.UslugioLibrary.UslugioFindProxy import UslugioFindProxyThreading
 from myLibrary import Loger, Ecxel, RequestTime
-from pywinauto import Application
-from shutil import which
 import re
+import os
 import win32com.client
 import threading
-import os
 
 # Для иконки в приложении
 try:
@@ -61,12 +59,12 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
         # Дерриктория файла excel uslugio
         if os.path.isfile(self.inp_path_excel_uslugio):
             self.pushButton_uslugio_file.setText(f"Файл Excel: {self.inp_path_excel_uslugio}")
+            # Кнопка открытия файла Excel
+            self.pushButton_uslugio_file_open.setText(f"Отк. {self.inp_name_excel_uslugio}")
         # Продолжить файл excel uslugio
         self.checkBox_uslugio_continuation.setChecked(self.inp_continuation_uslugio)
         # Начать занова запись в excel uslugio
         self.checkBox_uslugio_rewriting.setChecked(self.inp_rewriting_uslugio)
-        # Кнопка открытия файла Excel
-        self.pushButton_uslugio_file_open.setText(f"Отк. {self.inp_name_excel_uslugio}")
         # Данные вручную указываем откуда брать
         self.checkBox_uslugio_auto_input.setChecked(self.inp_auto_get_proxy)
         # Сайт указанный вручную для получения прокси
@@ -145,11 +143,21 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
 
     def start_uslugio_thread(self):
 
-        if not self.check_time():
-            return
-
         if not os.path.isfile(self.inp_path_excel_uslugio):
             print(f"$Выберите файл Excel для записи!")
+            return
+
+        if self.inp_manual_get_proxy:
+            try:
+                proxy = open(self.inp_path_manual_proxy).read()
+                if not re.search(r'\d+[.]\d+[.]\d+[.]\d+[:]\d+', proxy):
+                    print(f"$В файле не найдены прокси сервера!")
+                    return
+            except:
+                print(f"$В файле не найдены прокси сервера!")
+                return
+
+        if not self.check_time():
             return
 
         self.parsing_uslugio = True
@@ -183,18 +191,18 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
     def append_log(self, text, severity):
         if len(text) > 3:
             if severity == self.Severity.ERROR:
-                # self.plainTextEdit_uslugio_console.appendPlainText(text)
-                if self.parsing_uslugio:
-                    self.plainTextEdit_uslugio_console.appendPlainText(text)
-                    self.update_json()
-                if re.search(r'^[$](.*)', text):
-                    self.plainTextEdit_uslugio_console.appendPlainText(text)
+                self.plainTextEdit_uslugio_console.appendPlainText(text)
+                # if self.parsing_uslugio:
+                #     self.plainTextEdit_uslugio_console.appendPlainText(text)
+                #     self.update_json()
+                # if re.search(r'^[$](.*)', text):
+                #     self.plainTextEdit_uslugio_console.appendPlainText(text)
             else:
-                # self.plainTextEdit_uslugio_console.appendPlainText(text)
-                if self.parsing_uslugio:
-                    self.plainTextEdit_uslugio_console.appendPlainText(text)
-                if re.search(r'^[$](.*)', text):
-                    self.plainTextEdit_uslugio_console.appendPlainText(re.findall(r'^[$](.*)', text)[0])
+                self.plainTextEdit_uslugio_console.appendPlainText(text)
+                # if self.parsing_uslugio:
+                #     self.plainTextEdit_uslugio_console.appendPlainText(text)
+                # if re.search(r'^[$](.*)', text):
+                #     self.plainTextEdit_uslugio_console.appendPlainText(re.findall(r'^[$](.*)', text)[0])
 
     def closeEvent(self, event):
         self.update_json()
@@ -256,10 +264,10 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
         self.textEdit_uslugio_proxy.setText(self.proxy_str)
 
     def uslugio_select_file(self):
-        directory = QtWidgets.QFileDialog.getOpenFileName(self, "Выберите файл: Excel")
-        print(directory[0])
+        directory = QtWidgets.QFileDialog.getOpenFileName(parent=self, caption="Выберите файл: Excel", directory='')
+        # print(directory[0])
         # открыть диалог выбора директории и установить значение переменной
-        if directory:  # не продолжать выполнение, если пользователь не выбрал директорию
+        if directory[0]:  # не продолжать выполнение, если пользователь не выбрал директорию
             self.pushButton_uslugio_file.setText(f"Файл Excel: {directory[0]}")
             self.inp_path_excel_uslugio = directory[0]
             self.inp_name_excel_uslugio = re.sub(r'.*[/]+', '', directory[0])
@@ -306,9 +314,8 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
         return True
 
     def set_manual_proxy(self):
-        program_path = which('notepad')
         file_path = os.path.abspath(self.inp_path_manual_proxy)
-        app = Application().start(r'{} "{}"'.format(program_path, file_path))
+        os.startfile(file_path)
 
     def set_check_auto_input(self):
         if self.checkBox_uslugio_auto_input.isChecked():
