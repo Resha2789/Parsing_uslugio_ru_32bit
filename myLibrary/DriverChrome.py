@@ -1,6 +1,5 @@
 import re
 from selenium import webdriver
-from webdriver_manager.firefox import GeckoDriverManager
 from myLibrary import ProxyCheck
 from myLibrary import MainWindow
 from datetime import datetime, timedelta
@@ -28,11 +27,14 @@ class StartDriver(ProxyCheck.ProxyCheck):
         self.proxy_installed = False
 
     def kill_geckodriver(self):
-        PROCNAME = "geckodriver.exe"  # or chromedriver or IEDriverServer
-        for proc in psutil.process_iter():
-            # check whether the process name matches
-            if proc.name() == PROCNAME:
-                proc.kill()
+        try:
+            PROCNAME = "geckodriver.exe"  # or chromedriver or IEDriverServer
+            for proc in psutil.process_iter():
+                # check whether the process name matches
+                if proc.name() == PROCNAME:
+                    proc.kill()
+        except Exception as error:
+            return
 
     def star_driver(self, url=None, proxy=True):
         m: MainWindow.MainWindow

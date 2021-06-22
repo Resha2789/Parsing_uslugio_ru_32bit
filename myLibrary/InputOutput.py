@@ -18,6 +18,12 @@ class IntPut:
     inp_continuation_uslugio = True
     # Перезапись файла
     inp_rewriting_uslugio = False
+    # Данные с сайта https://advanced.name/ru
+    inp_auto_get_proxy = True
+    # Данные вручную указываем откуда брать
+    inp_manual_get_proxy = False
+    # Сайт указанный вручную для получения прокси
+    inp_path_manual_proxy = False
 
 
 # Возвращаемые данные

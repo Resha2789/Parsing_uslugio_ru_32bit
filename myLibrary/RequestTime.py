@@ -34,19 +34,19 @@ class RequestTime():
 
             date = re.findall(r'[:]\s+(.*)\s+год', date)[0]
 
-            # month_or = re.findall(r'\w+', date)[1]
-            #
-            # morph = pymorphy2.MorphAnalyzer()
-            # month_cus = morph.parse(month_or)[0]
-            # month_cus = month_cus.inflect({'nomn'}).word
-            # date = re.sub(month_or, month_cus, date)
-            #
-            # date_time_str = f"{date} {time}"
-            # self.date_time = datetime.strptime(date_time_str, '%d %B %Y %H:%M')
+            month_or = re.findall(r'\w+', date)[1]
+
+            morph = pymorphy2.MorphAnalyzer()
+            month_cus = morph.parse(month_or)[0]
+            month_cus = month_cus.inflect({'nomn'}).word
+            date = re.sub(month_or, month_cus, date)
+
+            date_time_str = f"{date} {time}"
+            self.date_time = datetime.strptime(date_time_str, '%d %B %Y %H:%M')
 
             return True
         except Exception as error:
-            print(f"$get_network_time {error}")
+            print(f"get_network_time {error}")
             return False
 
     def check_time(self):
@@ -55,11 +55,26 @@ class RequestTime():
             # print(self.date_time)
             # print(expiration_date)
 
-            if datetime.now() < expiration_date:
-                print(f"$До окончания пробного периода: {expiration_date - datetime.now()}")
+            if self.date_time < expiration_date:
+                print(f"$До окончания пробного периода: {expiration_date - self.date_time}")
                 return True
             else:
                 print(f"$Пробный период закончился!")
                 return False
         else:
             print(f"$Нету доступа в ИНТЕРНЕТ!")
+
+def test():
+    url_time_date = 'https://advanced.name/ru/freeproxy?type=https&page=1'
+
+    USERAGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36"
+    headers = {"User-Agent": USERAGENT}
+    resp = requests.get(url_time_date, headers=headers)
+    http_encoding = resp.encoding if 'charset' in resp.headers.get('content-type', '').lower() else None
+    html_encoding = EncodingDetector.find_declared_encoding(resp.content, is_html=True)
+    encoding = html_encoding or http_encoding
+    soup = BeautifulSoup(resp.content, 'lxml', from_encoding=encoding)
+    print(soup)
+
+if __name__ == '__main__':
+    test()

@@ -1,7 +1,9 @@
 Компеляция в .exe
 pyinstaller --onefile --noconsole --distpath D:\Фриланс\Авито\None\ -n Сборщик Main.py
-pyinstaller --onefile --noconsole --icon D:\Programming\Python\Parsing_Uslugio_Avito\icon_phone.ico --distpath D:\Фриланс\Авито\Сборщик_данных\ -n Сборщик_телефонов Main.py
---hidden-import pymorphy2_dicts_ru
+pyinstaller --onefile --noconsole --icon "D:\Programming\Python\Parsing_uslugio_ru_64bit\Все для сборщика данных\icon_phone.ico" --distpath D:\Фриланс\Авито\Сборщик_данных_uslugio_64bit\ -n Сборщик_телефонов_64bit Main.py
+pyinstaller --onefile --icon "D:\Programming\Python\Parsing_uslugio_ru_64bit\Все для сборщика данных\icon_phone.ico" --distpath D:\Фриланс\Авито\Сборщик_данных_uslugio_64bit\ -n Сборщик_телефонов_64bit Main.py
+
+--hidden-import pywinauto
 
 Конвертация ui в py
 pyuic5 D:\Programming\Python\Goblin_drilling_v.2.2\Lib\site-packages\QtDesigner\Uslugio_avito_parsing.ui -o myLibrary\My_pyqt5\Uslugio_avito_parsing.py

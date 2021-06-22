@@ -1,13 +1,26 @@
-import re
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import QObject
 from myLibrary.My_pyqt5 import Uslugio_avito_parsing
 from myLibrary.InitialData import InitialData
 from myLibrary.UslugioLibrary.UslugioParsing import UslugioThreading
 from myLibrary.UslugioLibrary.UslugioFindProxy import UslugioFindProxyThreading
 from myLibrary import Loger, Ecxel, RequestTime
+from pywinauto import Application
+from shutil import which
+import re
 import win32com.client
 import threading
+import os
+
+# Для иконки в приложении
+try:
+    # Включите в блок try/except, если вы также нацелены на Mac/Linux
+    from PyQt5.QtWinExtras import QtWin  # !!!
+
+    myappid = 'mycompany.myproduct.subproduct.version'  # !!!
+    QtWin.setCurrentProcessExplicitAppUserModelID(myappid)  # !!!
+except ImportError:
+    pass
 
 
 class Communicate(QObject):
@@ -19,7 +32,8 @@ class Communicate(QObject):
     uslugio_change_key_words = QtCore.pyqtSignal(object)
 
 
-class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Loger.OutLogger, Loger.OutputLogger, InitialData, RequestTime.RequestTime):
+class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Loger.OutLogger, Loger.OutputLogger, InitialData,
+                 RequestTime.RequestTime):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
@@ -36,22 +50,27 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
         # self.set_event_filter()
 
     def set_value(self):
+        # Устанавливаем иконку
+        self.setWindowIcon(QtGui.QIcon("""Все для сборщика данных/icon_phone.ico"""))
         # Город
         self.lineEdit_uslugio_city.setText(self.inp_city)
         # Ключевые слова
         self.textBrowser_uslugio_key_words.setText(self.key_words_str)
         # Показывать браузер
-        if self.inp_show_browser:
-            self.checkBox_uslugio_show_brawser.setChecked(True)
+        self.checkBox_uslugio_show_brawser.setChecked(self.inp_show_browser)
         # Дерриктория файла excel uslugio
-        self.pushButton_uslugio_file.setText(f"Файл Excel: {self.inp_path_excel_uslugio}")
+        if os.path.isfile(self.inp_path_excel_uslugio):
+            self.pushButton_uslugio_file.setText(f"Файл Excel: {self.inp_path_excel_uslugio}")
         # Продолжить файл excel uslugio
-        if self.inp_continuation_uslugio:
-            self.checkBox_uslugio_continuation.setChecked(True)
-        else:
-            self.checkBox_uslugio_rewriting.setChecked(True)
+        self.checkBox_uslugio_continuation.setChecked(self.inp_continuation_uslugio)
+        # Начать занова запись в excel uslugio
+        self.checkBox_uslugio_rewriting.setChecked(self.inp_rewriting_uslugio)
         # Кнопка открытия файла Excel
         self.pushButton_uslugio_file_open.setText(f"Отк. {self.inp_name_excel_uslugio}")
+        # Данные вручную указываем откуда брать
+        self.checkBox_uslugio_auto_input.setChecked(self.inp_auto_get_proxy)
+        # Сайт указанный вручную для получения прокси
+        self.checkBox_uslugio_manual_input.setChecked(self.inp_manual_get_proxy)
 
     def set_connect(self):
         # СТАРТ парсинга
@@ -90,6 +109,15 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
         # Записываем отображение браузера
         self.checkBox_uslugio_show_brawser.clicked.connect(self.set_show_browser)
 
+        # Сайт указанный вручную для получения прокси
+        self.pushButton_uslugio_set_manual_proxy.clicked.connect(self.set_manual_proxy)
+
+        # Данные вручную указываем откуда брать
+        self.checkBox_uslugio_auto_input.clicked.connect(self.set_check_auto_input)
+
+        # Сайт указанный вручную для получения прокси
+        self.checkBox_uslugio_manual_input.clicked.connect(self.set_check_manual_input)
+
     def set_event_filter(self):
 
         # EventFilter на виджет ключевые слова
@@ -118,6 +146,10 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
     def start_uslugio_thread(self):
 
         if not self.check_time():
+            return
+
+        if not os.path.isfile(self.inp_path_excel_uslugio):
+            print(f"$Выберите файл Excel для записи!")
             return
 
         self.parsing_uslugio = True
@@ -151,12 +183,14 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
     def append_log(self, text, severity):
         if len(text) > 3:
             if severity == self.Severity.ERROR:
+                # self.plainTextEdit_uslugio_console.appendPlainText(text)
                 if self.parsing_uslugio:
                     self.plainTextEdit_uslugio_console.appendPlainText(text)
                     self.update_json()
                 if re.search(r'^[$](.*)', text):
                     self.plainTextEdit_uslugio_console.appendPlainText(text)
             else:
+                # self.plainTextEdit_uslugio_console.appendPlainText(text)
                 if self.parsing_uslugio:
                     self.plainTextEdit_uslugio_console.appendPlainText(text)
                 if re.search(r'^[$](.*)', text):
@@ -192,7 +226,6 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
             if len(self.key_words_str) > 0:
                 self.key_words_str = re.sub(r'(,\s)$', '', self.key_words_str)
                 self.textBrowser_uslugio_key_words.setText(f"{self.key_words_str}")
-
 
     def set_proxy(self):
         data = re.split(r'[,]+\s*|\n', self.textEdit_uslugio_proxy.toPlainText())
@@ -236,17 +269,25 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
 
     def check_box_uslugio_continuation(self):
         if self.checkBox_uslugio_continuation.isChecked():
-            self.checkBox_uslugio_rewriting.setChecked(False)
             self.inp_continuation_uslugio = True
             self.inp_rewriting_uslugio = False
-            self.update_json()
+            self.checkBox_uslugio_rewriting.setChecked(False)
+        else:
+            self.inp_continuation_uslugio = False
+            self.inp_rewriting_uslugio = True
+            self.checkBox_uslugio_rewriting.setChecked(True)
+        self.update_json()
 
     def check_box_uslugio_rewriting(self):
         if self.checkBox_uslugio_rewriting.isChecked():
-            self.checkBox_uslugio_continuation.setChecked(False)
             self.inp_continuation_uslugio = False
             self.inp_rewriting_uslugio = True
-            self.update_json()
+            self.checkBox_uslugio_continuation.setChecked(False)
+        else:
+            self.inp_continuation_uslugio = True
+            self.inp_rewriting_uslugio = False
+            self.checkBox_uslugio_continuation.setChecked(True)
+        self.update_json()
 
     def file_open_uslugio(self):
         if self.uslugio_threading is not None:
@@ -254,7 +295,6 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
             self.write_to_excel()
         shell = win32com.client.Dispatch("WScript.Shell")
         shell.Run(f""""{self.inp_path_excel_uslugio}""")
-
 
     def write_to_excel(self):
         # Запись в файл Excel
@@ -264,3 +304,30 @@ class MainWindow(QtWidgets.QMainWindow, Uslugio_avito_parsing.Ui_MainWindow, Log
         if not excel.write_to_excel(self.out_uslugio_all_data):
             return False
         return True
+
+    def set_manual_proxy(self):
+        program_path = which('notepad')
+        file_path = os.path.abspath(self.inp_path_manual_proxy)
+        app = Application().start(r'{} "{}"'.format(program_path, file_path))
+
+    def set_check_auto_input(self):
+        if self.checkBox_uslugio_auto_input.isChecked():
+            self.inp_auto_get_proxy = True
+            self.inp_manual_get_proxy = False
+            self.checkBox_uslugio_manual_input.setChecked(False)
+        else:
+            self.inp_auto_get_proxy = False
+            self.inp_manual_get_proxy = True
+            self.checkBox_uslugio_manual_input.setChecked(True)
+        self.update_json()
+
+    def set_check_manual_input(self):
+        if self.checkBox_uslugio_manual_input.isChecked():
+            self.inp_auto_get_proxy = False
+            self.inp_manual_get_proxy = True
+            self.checkBox_uslugio_auto_input.setChecked(False)
+        else:
+            self.inp_auto_get_proxy = True
+            self.inp_manual_get_proxy = False
+            self.checkBox_uslugio_auto_input.setChecked(True)
+        self.update_json()

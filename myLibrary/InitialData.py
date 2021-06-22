@@ -29,6 +29,9 @@ class InitialData(InputOutput.IntPut, InputOutput.OutPut):
             self.inp_name_excel_uslugio = self.md['Name_excel_uslugio']
             self.inp_continuation_uslugio = self.md['Продолжить_файл_uslugio']
             self.inp_rewriting_uslugio = self.md['Перезапись_файла_uslugio']
+            self.inp_auto_get_proxy = self.md['Авто_получение_прокси']
+            self.inp_manual_get_proxy= self.md['Ручное_получение_прокси']
+            self.inp_path_manual_proxy = self.md['Адрес_для_получения_прокси']
 
             # Ключевые слова
             self.key_words_str = ''
@@ -74,6 +77,9 @@ class InitialData(InputOutput.IntPut, InputOutput.OutPut):
         self.md['Name_excel_uslugio'] = self.inp_name_excel_uslugio
         self.md['Продолжить_файл_uslugio'] = self.inp_continuation_uslugio
         self.md['Перезапись_файла_uslugio'] = self.inp_rewriting_uslugio
+        self.md['Авто_получение_прокси'] = self.inp_auto_get_proxy
+        self.md['Ручное_получение_прокси'] = self.inp_manual_get_proxy
+        self.md['Адрес_для_получения_прокси'] = self.inp_path_manual_proxy
 
         temp_md = {}
         temp_md.update(self.md)
