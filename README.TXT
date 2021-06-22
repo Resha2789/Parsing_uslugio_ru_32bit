@@ -1,7 +1,7 @@
 Компеляция в .exe
 pyinstaller --onefile --noconsole --distpath D:\Фриланс\Авито\None\ -n Сборщик Main.py
-pyinstaller --onefile --noconsole --icon "D:\Programming\Python\Parsing_uslugio_ru_64bit\Все для сборщика данных\icon_phone.ico" --distpath D:\Фриланс\Авито\Сборщик_данных_uslugio_64bit\ -n Сборщик_телефонов_64bit Main.py
-pyinstaller --onefile --icon "D:\Programming\Python\Parsing_uslugio_ru_64bit\Все для сборщика данных\icon_phone.ico" --distpath D:\Фриланс\Авито\Сборщик_данных_uslugio_64bit\ -n Сборщик_телефонов_64bit Main.py
+pyinstaller --onefile --noconsole --icon "D:\Programming\Python\Parsing_uslugio_ru_32bit\Все для сборщика данных\icon_phone.ico" --distpath D:\Фриланс\Авито\Сборщик_данных_uslugio_32bit\ -n Сборщик_телефонов_32bit Main.py
+pyinstaller --onefile --icon "D:\Programming\Python\Parsing_uslugio_ru_32bit\Все для сборщика данных\icon_phone.ico" --distpath D:\Фриланс\Авито\Сборщик_данных_uslugio_32bit\ -n Сборщик_телефонов_32bit Main.py
 
 --hidden-import pywinauto
 
