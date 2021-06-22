@@ -3,7 +3,7 @@ pyinstaller --onefile --noconsole --distpath D:\Фриланс\Авито\None\ 
 pyinstaller --onefile --noconsole --icon "D:\Programming\Python\Parsing_uslugio_ru_32bit\Все для сборщика данных\icon_phone.ico" --distpath D:\Фриланс\Авито\Сборщик_данных_uslugio_32bit\ -n Сборщик_телефонов_32bit Main.py
 pyinstaller --onefile --icon "D:\Programming\Python\Parsing_uslugio_ru_32bit\Все для сборщика данных\icon_phone.ico" --distpath D:\Фриланс\Авито\Сборщик_данных_uslugio_32bit\ -n Сборщик_телефонов_32bit Main.py
 
---hidden-import pywinauto
+--hidden-import pywinauto #
 
 Конвертация ui в py
 pyuic5 D:\Programming\Python\Goblin_drilling_v.2.2\Lib\site-packages\QtDesigner\Uslugio_avito_parsing.ui -o myLibrary\My_pyqt5\Uslugio_avito_parsing.py
